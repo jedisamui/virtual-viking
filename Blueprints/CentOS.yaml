@@ -1,0 +1,28 @@
+#--------------------------------------------------------#
+# Author: Sam Aaron                                      #
+# Team: Team Viking, VMware PSO                          #
+#                                                        #
+#--------------------------------------------------------#
+blueprint_name: Basic CentOS
+version: 1
+#-------------------------INPUTS----------------------------#
+inputs: {}
+#-------------------------RESOURCES-------------------------#
+resources:
+  Cloud_vSphere_Machine_1:
+    type: Cloud.vSphere.Machine
+    properties:
+      image: CentOS7
+      flavor: Small
+      name: localvm
+      constraints:
+        - tag: 'platform:vsphere'
+      networks:
+        - network: '${resource.Cloud_vSphere_Network_1.id}'
+      assignment: static
+      assignPublicIpAddress: false
+  Cloud_vSphere_Network_1:
+    type: Cloud.vSphere.Network
+    properties:
+      networkType: existing
+      name: vsphere-networks
