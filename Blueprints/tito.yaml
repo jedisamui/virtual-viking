@@ -1,0 +1,160 @@
+#--------------------------------------------------------#
+# Author: Sam Aaron                                      #
+# Team: Team Viking, VMware PSO                          #
+#                                                        #
+#--------------------------------------------------------#
+name: Tito - Multi-Tier
+version: 1
+#-------------------------INPUTS-------------------------#
+inputs:
+  image:
+    type: string
+    enum:
+      - centos-74-image
+      - centos-74-livefire-image
+    default: centos-74-livefire-image
+    description: Select image
+    title: Image
+  size:
+    type: string
+    enum:
+      - micro
+      - small
+    default: micro
+    description: Select the size of the deployment.
+    title: Flavour (Size)
+  region:
+    type: string
+    oneOf:
+      - title: Development
+        const: 'cas.cloud.zone.env:dev'
+      - title: Test
+        const: 'cas.cloud.zone.env:test'
+      - title: Prodiction
+        const: 'cas.cloud.zone.env:prod'
+    default: 'cas.cloud.zone.env:dev'
+    description: 'Select the development, testing, or production environment .'
+    title: Environment (Region)
+  cloudZone:
+    type: string
+    oneOf:
+      - title: AWS
+        const: 'cas.cloud.account.source:aws'
+      - title: Azure
+        const: 'cas.cloud.account.source:azure'
+    default: 'cas.cloud.account.source:aws'
+    description: Select Public CLoud.
+    title: Cloud Zone
+  count:
+    type: integer
+    default: 1
+    maximum: 5
+    minimum: 1
+    title: Cluster Size
+    description: Cluster Size (Number of nodes)
+  databaseDiskSize:
+    type: number
+    default: 4
+    maximum: 10
+    title: MySQL Data Disk Size
+    description: Size of database disk
+  archiveDiskSize:
+    type: number
+    default: 4
+    maximum: 10
+    title: Archive Disk Size
+    description: Size of  archive disk
+#-------------------------RESOURCES-------------------------#
+resources:
+  app-public-net:
+    type: Cloud.Network
+    properties:
+      tags:
+        - value: class-delivery
+          key: cas-resource-desc
+      name: net-tito-web
+      networkType: existing
+      constraints:
+        - tag: 'cas.network.type:public'
+  db-tier:
+    type: Cloud.Machine
+    properties:
+      resourceGroupName: '${"elasticsky-" + substring(input.region, 19, -1) + "-rg"}'
+      tags:
+        - value: class-delivery
+          key: cas-resource-desc
+        - value: '${env.requestedBy}'
+          key: cas-resource-owner
+      constraints:
+        - tag: '${input.cloudZone}'
+        - tag: '${input.region}'
+      name: vm-tito-db
+      flavor: '${input.size}'
+      image: '${input.image}'
+      storage:
+        disks:
+          - capacityGb: '${input.databaseDiskSize}'
+        constraints:
+          - tag: 'cas.storage.profile.tier:silver'
+      networks:
+        - name: '${resource["app-public-net"].name}'
+          network: '${resource["app-public-net"].id}'
+      remoteAccess:
+        authentication: publicPrivateKey
+        sshKey: ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAp7fYaIex88KRGhNWTYIwqJn/jtDp9ZV71WtBSpi9/LFhMh0f87n+W8Ms3QgA2WdEcTJRLoc3blHGo3a6TIqDGuVmGwgJjXpQA65aHjQS5P3gv86vDELuTlKev3BumcvmqpGeoyKY4zn4RLtdiWDCLI+rMEkWAPyV7RbbNzuaJoQUKTdfv1iBfWo0thoQzTj9KluTgM6FWXz7iyNB4J7NXIeYfxfbQgl3mAGdQkc11cgrnfFfjIRVA/nE5pUbOErJ9cUEMscb5iXMPQvs2zKcfZ0FYd4+TwfRpPwzYVC/vmS9kO7jrGQbtkOzTyf1GqOXCQ4URX2cPWS4zthXS5gm5Q==
+      cloudConfig: |
+        #cloud-config 
+        repo_update: true 
+        repo_upgrade: all 
+        packages:
+          - git
+          - mariadb-server
+        runcmd:  
+          - sudo -s
+          - cd /tmp
+          - git clone http://gitlab.elasticskyholdings.com/class-delivery/tito.git
+          - cd tito/asset/Deployment/CloudAssembly/titodb/
+          - chmod u+x *.sh
+          - bash tito_db.sh
+  web-tier:
+    type: Cloud.Machine
+    dependsOn:
+      - db-tier
+    properties:
+      resourceGroupName: '${"elasticsky-" + substring(input.region, 19, -1) + "-rg"}'
+      tags:
+        - value: class-delivery
+          key: cas-resource-desc
+        - value: '${env.requestedBy}'
+          key: cas-resource-owner
+      constraints:
+        - tag: '${input.cloudZone}'
+        - tag: '${input.region}'
+      name: vm-tito-web
+      flavor: '${input.size}'
+      image: '${input.image}'
+      count: '${input.count}'
+      networks:
+        - name: '${resource["app-public-net"].name}'
+          network: '${resource["app-public-net"].id}'
+      storage:
+        disks:
+          - capacityGb: '${input.archiveDiskSize}'
+        constraints:
+          - tag: 'cas.storage.profile.tier:silver'
+      remoteAccess:
+        authentication: publicPrivateKey
+        sshKey: ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAp7fYaIex88KRGhNWTYIwqJn/jtDp9ZV71WtBSpi9/LFhMh0f87n+W8Ms3QgA2WdEcTJRLoc3blHGo3a6TIqDGuVmGwgJjXpQA65aHjQS5P3gv86vDELuTlKev3BumcvmqpGeoyKY4zn4RLtdiWDCLI+rMEkWAPyV7RbbNzuaJoQUKTdfv1iBfWo0thoQzTj9KluTgM6FWXz7iyNB4J7NXIeYfxfbQgl3mAGdQkc11cgrnfFfjIRVA/nE5pUbOErJ9cUEMscb5iXMPQvs2zKcfZ0FYd4+TwfRpPwzYVC/vmS9kO7jrGQbtkOzTyf1GqOXCQ4URX2cPWS4zthXS5gm5Q==
+      cloudConfig: |
+        #cloud-config
+        repo_update: true
+        repo_upgrade: all
+        packages:
+         - git
+        runcmd:
+          - sudo -s
+          - cd /tmp
+          - git clone http://gitlab.elasticskyholdings.com/class-delivery/tito.git
+          - cd tito/asset/Deployment/CloudAssembly/titodb/
+          - chmod u+x *.sh
+          - bash tito_as.sh ${resource["db-tier"].address}
