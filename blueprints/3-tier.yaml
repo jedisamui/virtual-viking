@@ -1,0 +1,157 @@
+#--------------------------------------------------------#
+# Author: Sam Aaron                                      #
+# Team: Team Viking, VMware PSO                          #
+#                                                        #
+#--------------------------------------------------------#
+name: app-sandbox
+version: 1
+#-------------------------INPUTS-------------------------#
+inputs:
+  cloud:
+    type: string
+    enum:
+      - aws
+      - sddc
+    default: sddc
+    title: Select Environment for Deployment
+    description: Target Environment
+  stage:
+    type: string
+    enum:
+      - dev
+      - prod
+    default: prod
+    title: Select the lifecycle Stage
+    description: LifeCycle Stage
+  username:
+    type: string
+    title: Admin Username
+    default: admin
+    description: The username you would like to have for the installation.
+  password:
+    type: string
+    pattern: '[a-z0-9A-Z@#$]+'
+    encrypted: true
+    title: Admin Password
+    default: VMware1!
+    description: The password you would like to use for the admin account.
+  quantity-web:
+    type: integer
+    title: Web Instances
+    default: 0
+    description: How many WEB instances (0-8)?
+  quantity-app:
+    type: integer
+    title: App Instances
+    default: 0
+    description: How many APP instances (0-8)?
+  quantity-db:
+    type: integer
+    title: DB Instances
+    default: 0
+    description: How many DB instances (0-3)?
+#-------------------------RESOURCES-------------------------#
+resources:
+  tier-app:
+    type: Cloud.Machine
+    properties:
+      flavor: small
+      image: ubuntu1804-cloudimg
+      count: '${input.quantity-app}'
+      cloudConfig: |
+        repo_update: true
+        repo_upgrade: all
+        apt_source:
+          - source: deb http://archive.ubuntu.com/ubuntu main universe multiverse restricted
+              
+        packages:
+          - unzip
+          
+        users:
+          - name: ${input.username}
+            sudo: ['ALL=(ALL) NOPASSWD:ALL']
+            groups: sudo
+            shell: /bin/bash
+            
+        runcmd:
+          - USER=${input.username}
+          - PASS=${input.password}
+          - echo ${input.username}:${input.password} | /usr/sbin/chpasswd
+          - sed -i "s/PasswordAuthentication no/PasswordAuthentication yes/g" /etc/ssh/sshd_config
+          - service ssh reload
+          - echo "${input.username} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+          - echo 'Cloud-init is done!' >> /tmp/finished.txt
+      constraints:
+        - tag: 'cloud:${input.cloud}'
+      networks:
+        - network: '${resource.appnet.id}'
+  tier-web:
+    type: Cloud.Machine
+    properties:
+      flavor: small
+      image: ubuntu1804-cloudimg
+      count: '${input.quantity-web}'
+      cloudConfig: |
+        repo_update: true
+        repo_upgrade: all
+        apt_source:
+          - source: deb http://archive.ubuntu.com/ubuntu main universe multiverse restricted
+              
+        packages:
+          - unzip
+          
+        users:
+          - name: ${input.username}
+            sudo: ['ALL=(ALL) NOPASSWD:ALL']
+            groups: sudo
+            shell: /bin/bash
+            
+        runcmd:
+          - USER=${input.username}
+          - PASS=${input.password}
+          - echo ${input.username}:${input.password} | /usr/sbin/chpasswd
+          - sed -i "s/PasswordAuthentication no/PasswordAuthentication yes/g" /etc/ssh/sshd_config
+          - service ssh reload
+          - echo "${input.username} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+          - echo 'Cloud-init is done!' >> /tmp/finished.txt
+      constraints:
+        - tag: 'cloud:${input.cloud}'
+      networks:
+        - network: '${resource.appnet.id}'
+  tier-db:
+    type: Cloud.Machine
+    properties:
+      flavor: small
+      image: ubuntu1804-cloudimg
+      count: '${input.quantity-db}'
+      cloudConfig: |
+        repo_update: true
+        repo_upgrade: all
+        apt_source:
+          - source: deb http://archive.ubuntu.com/ubuntu main universe multiverse restricted
+              
+        packages:
+          - unzip
+          
+        users:
+          - name: ${input.username}
+            sudo: ['ALL=(ALL) NOPASSWD:ALL']
+            groups: sudo
+            shell: /bin/bash
+            
+        runcmd:
+          - USER=${input.username}
+          - PASS=${input.password}
+          - echo ${input.username}:${input.password} | /usr/sbin/chpasswd
+          - sed -i "s/PasswordAuthentication no/PasswordAuthentication yes/g" /etc/ssh/sshd_config
+          - service ssh reload
+          - echo "${input.username} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+          - echo 'Cloud-init is done!' >> /tmp/finished.txt
+      constraints:
+        - tag: 'cloud:${input.cloud}'
+      networks:
+        - network: '${resource.appnet.id}'
+  appnet:
+    type: Cloud.Network
+    properties:
+      networkType: existing
