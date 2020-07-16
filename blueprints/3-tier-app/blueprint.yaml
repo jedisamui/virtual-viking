@@ -3,7 +3,7 @@
 # Team: Team Viking, VMware PSO                          #
 #                                                        #
 #--------------------------------------------------------#
-name: Basic: 3-Tier App
+name: Basic 3-Tier App
 version: 1
 #-------------------------INPUTS-------------------------#
 inputs:
