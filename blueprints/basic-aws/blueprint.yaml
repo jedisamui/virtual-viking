@@ -3,7 +3,7 @@
 # Team: Team Viking, VMware PSO                          #
 #                                                        #
 #--------------------------------------------------------#
-name: Basic: aws
+name: Basic aws
 version: 1
 #-------------------------INPUTS-------------------------#
 inputs: {}
