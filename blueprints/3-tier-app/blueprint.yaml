@@ -3,7 +3,7 @@
 # Team: Team Viking, VMware PSO                          #
 #                                                        #
 #--------------------------------------------------------#
-name: app-sandbox
+name: Basic: 3-Tier App
 version: 1
 #-------------------------INPUTS-------------------------#
 inputs:
