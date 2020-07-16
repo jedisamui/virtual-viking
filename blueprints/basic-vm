@@ -1,0 +1,34 @@
+#--------------------------------------------------------#
+# Author: Sam Aaron                                      #
+# Team: Team Viking, VMware PSO                          #
+#                                                        #
+#--------------------------------------------------------#
+name: basic vm
+version: 1
+#-------------------------INPUTS-------------------------#
+inputs: {}
+#-------------------------RESOURCES-------------------------#
+resources:
+  webserver:
+    type: Cloud.vSphere.Machine
+    properties:
+      name: webserver
+      image: centos
+      flavor: small
+      networks:
+        - network: '${resource.webnet.id}'
+      assignment: static
+      cloudConfig:
+        users:
+          - name: holuser
+        ssh-authorized-keys:
+          - ssh-rsa
+        sudo:
+          - 'ALL=(ALL) NOPASSWD:ALL'
+        groups: sudo
+        shell: /bin/bash
+  webnet:
+    type: Cloud.vSphere.Network
+    properties:
+      name: webnet
+      networkType: existing
