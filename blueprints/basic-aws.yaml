@@ -1,0 +1,52 @@
+#--------------------------------------------------------#
+# Author: Sam Aaron                                      #
+# Team: Team Viking, VMware PSO                          #
+#                                                        #
+#--------------------------------------------------------#
+name: basic-aws
+version: 1
+#-------------------------INPUTS-------------------------#
+inputs: {}
+#-------------------------RESOURCES-------------------------#
+resources:
+  LB:
+    type: Cloud.LoadBalancer
+    properties:
+      name: lb
+      routes:
+        - instancePort: 80
+          instanceProtocol: http
+          port: 80
+          protocol: http
+      network: '${resource.Web.id}'
+      instances:
+        - $(resource.Machine.id)
+      internetFacing: true
+  Machine:
+    type: Cloud.Machine
+    createBeforeDelete: true
+    properties:
+      image: ubuntu
+      flavor: small
+      constraints:
+        - tag: 'platform:aws'
+      cloudConfig:
+        packages:
+          - apache2
+        runcmd:
+          - ufw allow 'Apache Full'
+          - 'git clone https://github.com/kenshi08/dingo'
+          - cp -r /dingo/* /var/www/html
+        users:
+          - name: vikinguser
+        ssh-authorized-keys:
+          - ssh-rsa
+        sudo:
+          - 'ALL=(ALL) NOPASSWD:ALL'
+        groups: sudo
+      networks:
+        - network: '${resource.Web.id}'
+  Web:
+    type: Cloud.Network
+    properties:
+      networkType: existing
