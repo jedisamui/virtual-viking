@@ -3,7 +3,7 @@
 # Team: Team Viking, VMware PSO                          #
 #                                                        #
 #--------------------------------------------------------#
-name: Basic: CentOS
+name: Basic CentOS
 version: 1
 #-------------------------INPUTS----------------------------#
 inputs: {}
