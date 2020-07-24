@@ -1,0 +1,7 @@
+name: test blueprint
+version: 2
+options:
+  blueprintoptionsgitsync: true
+  blueprintOptionGitDelete: false
+inputs: {}
+resources: {}
