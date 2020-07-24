@@ -1,0 +1,40 @@
+name: Basic Virtual Machine
+version: 0.0.27
+options:
+  blueprintoptionsgitsync: true
+  gitlabSyncDelete: false
+inputs: {}
+resources:
+  webserver:
+    type: Cloud.vSphere.Machine
+    metadata:
+      layoutPosition:
+      - 0
+      - 0
+    properties:
+      name: webserver
+      image: centos
+      flavor: small
+      constraints:
+      - tag: platform:vsphere
+      networks:
+      - network: ${resource.webnet.id}
+      assignment: static
+      cloudConfig:
+        users:
+        - name: vmadmin
+        ssh-authorized-keys:
+        - ssh-rsa
+        sudo:
+        - ALL=(ALL) NOPASSWD:ALL
+        groups: sudo
+        shell: /bin/bash
+  webnet:
+    type: Cloud.vSphere.Network
+    metadata:
+      layoutPosition:
+      - 1
+      - 0
+    properties:
+      name: webnet
+      networkType: existing
