@@ -1,52 +1,60 @@
-#--------------------------------------------------------#
-# Author: Sam Aaron                                      #
-# Team: Team Viking, VMware PSO                          #
-#                                                        #
-#--------------------------------------------------------#
 name: Basic aws
-version: 1
-#-------------------------INPUTS-------------------------#
+version: 0.0.2
+options:
+  blueprintoptionsgitsync: true
+  blueprintOptionGitDelete: false
 inputs: {}
-#-------------------------RESOURCES-------------------------#
 resources:
   LB:
     type: Cloud.LoadBalancer
+    metadata:
+      layoutPosition:
+      - 0
+      - 0
     properties:
       name: lb
       routes:
-        - instancePort: 80
-          instanceProtocol: http
-          port: 80
-          protocol: http
-      network: '${resource.Web.id}'
+      - instancePort: 80
+        instanceProtocol: http
+        port: 80
+        protocol: http
+      network: ${resource.Web.id}
       instances:
-        - $(resource.Machine.id)
+      - $(resource.Machine.id)
       internetFacing: true
   Machine:
     type: Cloud.Machine
+    metadata:
+      layoutPosition:
+      - 0
+      - 1
     createBeforeDelete: true
     properties:
       image: ubuntu
       flavor: small
       constraints:
-        - tag: 'platform:aws'
+      - tag: platform:aws
       cloudConfig:
         packages:
-          - apache2
+        - apache2
         runcmd:
-          - ufw allow 'Apache Full'
-          - 'git clone https://github.com/kenshi08/dingo'
-          - cp -r /dingo/* /var/www/html
+        - ufw allow 'Apache Full'
+        - git clone https://github.com/kenshi08/dingo
+        - cp -r /dingo/* /var/www/html
         users:
-          - name: vikinguser
+        - name: vikinguser
         ssh-authorized-keys:
-          - ssh-rsa
+        - ssh-rsa
         sudo:
-          - 'ALL=(ALL) NOPASSWD:ALL'
+        - ALL=(ALL) NOPASSWD:ALL
         groups: sudo
       networks:
-        - network: '${resource.Web.id}'
+      - network: ${resource.Web.id}
   Web:
     type: Cloud.Network
+    metadata:
+      layoutPosition:
+      - 1
+      - 0
     properties:
       networkType: existing
