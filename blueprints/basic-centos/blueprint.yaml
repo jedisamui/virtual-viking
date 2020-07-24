@@ -1,0 +1,32 @@
+name: Basic CentOS
+version: 0.0.2
+options:
+  blueprintoptionsgitsync: true
+  blueprintOptionGitDelete: false
+inputs: {}
+resources:
+  Cloud_vSphere_Machine_1:
+    type: Cloud.vSphere.Machine
+    metadata:
+      layoutPosition:
+      - 0
+      - 0
+    properties:
+      image: CentOS7
+      flavor: Small
+      name: localvm
+      constraints:
+      - tag: platform:vsphere
+      networks:
+      - network: ${resource.Cloud_vSphere_Network_1.id}
+      assignment: static
+      assignPublicIpAddress: false
+  Cloud_vSphere_Network_1:
+    type: Cloud.vSphere.Network
+    metadata:
+      layoutPosition:
+      - 1
+      - 0
+    properties:
+      networkType: existing
+      name: vsphere-networks
