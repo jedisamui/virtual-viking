@@ -1,0 +1,38 @@
+name: Custom Ubuntu v18 VM
+version: 0.0.1
+options:
+  blueprintoptionsgitsync: true
+  blueprintOptionGitDelete: false
+inputs:
+  user:
+    type: string
+  sshkey:
+    type: string
+resources:
+  Cloud_Machine_1:
+    type: Cloud.Machine
+    metadata:
+      layoutPosition:
+      - 0
+      - 0
+    properties:
+      image: Ubuntu18
+      flavor: Small
+      name: test-vm
+      networks:
+      - name: ${resource.Cloud_vSphere_Network_1.id}
+        network: ${resource.Cloud_vSphere_Network_1.id}
+      remoteAccess:
+        authentication: publicPrivateKey
+        sshKey: ${input.sshkey}
+        username: ${input.user}
+      constraints:
+      - tag: platform:vsphere
+  Cloud_vSphere_Network_1:
+    type: Cloud.vSphere.Network
+    metadata:
+      layoutPosition:
+      - 1
+      - 0
+    properties:
+      networkType: existing
