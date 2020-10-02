@@ -1,5 +1,5 @@
-name: Custom Ubuntu v18 VM
-version: 0.0.1
+name: Ubuntu v18 VM
+version: 0.0.2
 options:
   blueprintoptionsgitsync: true
   blueprintOptionGitDelete: false
@@ -22,6 +22,7 @@ resources:
       networks:
       - name: ${resource.Cloud_vSphere_Network_1.id}
         network: ${resource.Cloud_vSphere_Network_1.id}
+        assignment: static
       remoteAccess:
         authentication: publicPrivateKey
         sshKey: ${input.sshkey}
