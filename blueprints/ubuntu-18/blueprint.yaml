@@ -1,5 +1,5 @@
 name: Ubuntu v18 VM
-version: 0.0.2
+version: 0.0.3
 options:
   blueprintoptionsgitsync: true
   blueprintOptionGitDelete: false
@@ -18,11 +18,14 @@ resources:
     properties:
       image: Ubuntu18
       flavor: Small
+      customizationSpec: Ubuntu
       name: test-vm
       networks:
       - name: ${resource.Cloud_vSphere_Network_1.id}
         network: ${resource.Cloud_vSphere_Network_1.id}
         assignment: static
+        assignIPv6Address: false
+        assignPublicIpAddress: false
       remoteAccess:
         authentication: publicPrivateKey
         sshKey: ${input.sshkey}
