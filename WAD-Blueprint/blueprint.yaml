@@ -1,5 +1,5 @@
 name: WAD-Blueprint
-version: 0.0.31
+version: 0.0.30
 options:
   blueprintOptionGitSync: true
   blueprintOptionGitDelete: false
