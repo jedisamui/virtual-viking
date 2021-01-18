@@ -1,0 +1,106 @@
+name: WAD-Blueprint
+version: 0.0.30
+options:
+  blueprintOptionGitSync: true
+  blueprintOptionGitDelete: false
+inputs:
+  inzone:
+    type: string
+    enum:
+    - zone:web
+    - zone:app
+    - zone:data
+    default: zone:web
+    title: Zone
+    description: Zone
+  inqty:
+    type: integer
+    minimum: 1
+    maximum: 98
+    default: 1
+    title: Quantity
+    description: Quantity
+  inDataSize_1:
+    type: integer
+    minimum: 2
+    maximum: 10
+    default: 2
+    title: Data Disk Size (2-10)
+    description: Data Disk Size in GB
+  inTempSize_2:
+    type: integer
+    minimum: 2
+    maximum: 10
+    default: 2
+    title: Temp Disk Size (2-10)
+    description: Temp Disk Size in GB
+resources:
+  Virtual_Machine_Disk_2:
+    type: Cloud.vSphere.Disk
+    metadata:
+      layoutPosition:
+      - 1
+      - 2
+    properties:
+      capacityGb: ${input.inTempSize_2}
+      name: Temp
+      constraints:
+      - tag: ${input.inzone}
+  SecurityGroup_1:
+    type: Cloud.SecurityGroup
+    metadata:
+      layoutPosition:
+      - 2
+      - 0
+    properties:
+      constraints:
+      - tag: ${input.inzone}
+      securityGroupType: existing
+  Virtual_Machine_1:
+    type: Cloud.vSphere.Machine
+    metadata:
+      layoutPosition:
+      - 2
+      - 1
+    properties:
+      name: ${to_lower(substring(input.inzone,5))}
+      image: Photon
+      flavor: Medium
+      count: ${input.inqty}
+      constraints:
+      - tag: ca:site1
+      - tag: cluster:ready
+      - tag: ${input.inzone}
+      networks:
+      - network: ${resource.Network_1.id}
+        assignment: dynamic
+        securityGroups:
+        - ${resource.SecurityGroup_1.id}
+      storage:
+        constraints:
+        - tag: ${input.inzone}
+      attachedDisks:
+      - source: ${resource.Virtual_Machine_Disk_1.id}
+      - source: ${resource.Virtual_Machine_Disk_2.id}
+  Virtual_Machine_Disk_1:
+    type: Cloud.vSphere.Disk
+    metadata:
+      layoutPosition:
+      - 1
+      - 1
+    properties:
+      capacityGb: ${input.inDataSize_1}
+      name: Data
+      constraints:
+      - tag: ${input.inzone}
+  Network_1:
+    type: Cloud.vSphere.Network
+    metadata:
+      layoutPosition:
+      - 3
+      - 0
+    properties:
+      name: webnet
+      networkType: existing
+      constraints:
+      - tag: ${input.inzone}
