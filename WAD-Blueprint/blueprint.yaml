@@ -1,8 +1,8 @@
 name: WAD-Blueprint
-version: 0.0.27
+version: 0.0.28
 options:
-  blueprintOptionGitSync: true
-  blueprintOptionGitDelete: false
+  blueprintoptiongitsync: true
+  blueprintoptiongitdelete: false
 inputs:
   inzone:
     type: string
