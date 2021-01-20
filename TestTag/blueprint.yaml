@@ -1,0 +1,64 @@
+version: 0.0.11
+inputs:
+  inzone:
+    type: string
+    enum:
+    - zone:web
+    - zone:app
+    - zone:data
+    default: zone:web
+    title: Zone
+    description: Zone
+  inqty:
+    type: integer
+    minimum: 1
+    maximum: 98
+    default: 1
+    title: Quantity
+    description: Quantity
+  instor:
+    type: string
+    enum:
+    - stor:nfs
+    - stor:vsan
+    default: stor:nfs
+    title: Storage
+    description: Storage
+  inName:
+    type: string
+    title: VM Name
+resources:
+  Virtual_Machine_1:
+    type: Cloud.vSphere.Machine
+    metadata:
+      layoutPosition:
+      - 1
+      - 1
+    properties:
+      userDefinedName: ${input.inName}
+      image: Photon
+      flavor: Medium
+      count: ${input.inqty}
+      constraints:
+      - tag: ca:site1
+      - tag: cluster:ready
+      - tag: ${input.inzone}
+      networks:
+      - network: ${resource.Network_1.id}
+        assignment: dynamic
+      storage:
+        constraints:
+        - tag: ${input.instor}
+        - tag: ${input.inzone}
+  Network_1:
+    type: Cloud.vSphere.Network
+    metadata:
+      layoutPosition:
+      - 2
+      - 0
+    properties:
+      name: webnet
+      networkType: existing
+      constraints:
+      - tag: ${input.inzone}
+name: TestTag
