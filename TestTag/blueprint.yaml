@@ -1,4 +1,4 @@
-version: 0.0.11
+version: '12'
 inputs:
   inzone:
     type: string
@@ -27,7 +27,25 @@ inputs:
   inName:
     type: string
     title: VM Name
+  inDisksize:
+    type: integer
+    minimum: 40
+    maximum: 300
+    default: 40
+    title: Disk Size (Gb)
+    description: Enter the size of the disk in Gb
 resources:
+  Cloud_vSphere_Disk_1:
+    type: Cloud.vSphere.Disk
+    metadata:
+      layoutPosition:
+      - 0
+      - 0
+    properties:
+      capacityGb: ${input.inDisksize}
+      constraints:
+      - tag: ${input.instor}
+      - tag: ${input.inzone}
   Virtual_Machine_1:
     type: Cloud.vSphere.Machine
     metadata:
@@ -50,6 +68,8 @@ resources:
         constraints:
         - tag: ${input.instor}
         - tag: ${input.inzone}
+      attachedDisks:
+      - source: ${resource.Cloud_vSphere_Disk_1.id}
   Network_1:
     type: Cloud.vSphere.Network
     metadata:
