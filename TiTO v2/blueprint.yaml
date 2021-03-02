@@ -1,10 +1,10 @@
 name: TiTO v2
-version: 0.0.2
+version: 0.0.3
 inputs:
   inmapsapikey:
     type: string
     description: google maps api key
-    default: CHANGE TO MAPS KEY
+    default: AIzaSyA5ZDRG9r8hBWrtlGsEuJKU2KBg_cCV_Qk
   inSSHkey:
     type: string
     description: VM SSH Key
@@ -18,15 +18,14 @@ inputs:
     title: Quantity
     description: How many VMs?
 resources:
-  Cloud_LoadBalancer_1:
-    type: Cloud.LoadBalancer
+  Cloud_NSX_LoadBalancer:
+    type: Cloud.NSX.LoadBalancer
     metadata:
       layoutPosition:
       - 0
       - 0
     properties:
       name: TITOLoadBalancer
-      count: 1
       routes:
       - instancePort: 80
         instanceProtocol: HTTP
@@ -34,7 +33,6 @@ resources:
         port: 80
       network: ${resource.Web_Network.name}
       instances: ${resource.FrontEnd.id}
-      internetFacing: true
   FrontEnd:
     type: Cloud.Machine
     dependsOn:
@@ -90,7 +88,6 @@ resources:
       - 0
       - 2
     properties:
-      count: 1
       image: Ubuntu20
       flavor: 1vCPU-2GB
       tags:
