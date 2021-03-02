@@ -1,5 +1,5 @@
 name: TiTO v2
-version: 0.0.3
+version: 0.0.5
 inputs:
   inmapsapikey:
     type: string
@@ -27,10 +27,8 @@ resources:
     properties:
       name: TITOLoadBalancer
       routes:
-      - instancePort: 80
-        instanceProtocol: HTTP
-        protocol: HTTP
-        port: 80
+      - protocol: HTTP
+        port: '80'
       network: ${resource.Web_Network.name}
       instances: ${resource.FrontEnd.id}
   FrontEnd:
@@ -43,7 +41,7 @@ resources:
       - 1
     properties:
       count: ${input.inqty}
-      image: Ubuntu20
+      image: Ubuntu20c
       flavor: 1vCPU-2GB
       remoteAccess:
         username: vmadmin
@@ -52,10 +50,6 @@ resources:
       storage:
         constraints:
         - tag: vl-sp:nfs
-      cloudConfigSettings:
-        phoneHomeFailOnTimeout: true
-        phoneHomeShouldWait: true
-        phoneHomeTimeouSeconds: 600
       cloudConfig: "#cloud-config\n# log all cloud-init process output (info & errors)\
         \ to a logfile\noutput: {all: \">> /var/log/cloud-init-output.log\"}\npackages:\n\
         \ - git\nruncmd:\n - sudo apt install apache2 --assume-yes\n - sudo git clone\
@@ -88,7 +82,7 @@ resources:
       - 0
       - 2
     properties:
-      image: Ubuntu20
+      image: Ubuntu20c
       flavor: 1vCPU-2GB
       tags:
       - key: tito
