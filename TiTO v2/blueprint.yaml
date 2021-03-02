@@ -1,0 +1,194 @@
+name: TiTO v2
+version: 0.0.2
+inputs:
+  inmapsapikey:
+    type: string
+    description: google maps api key
+    default: CHANGE TO MAPS KEY
+  inSSHkey:
+    type: string
+    description: VM SSH Key
+    default: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDXarzp9eEGTG8lDBtAQxXGNzdGNcWD8v6wMpS4jABPP+UqsbFP83vDFG5zdyVx+HyKuoHJyQZAEdJXsNfug9m6rdRAzCpPrkPf0vbO/FNehjpvsYrwJBm2VcBEu+hiPAEe7g/qpl20PKAviSutziuQaVR5PZS5NWFx5YCaDHSbhn5rFWLKfMXcts+Fd2aXN2CTIQh/Y5Cj7YXcYuxs+XqrECnLNwy85/BqQbaLN7lKRBpuEhJk8U5TiqlJ3FkarT3d3khblXuPZcroLRw2lrvrXD8n7IDCF4m1z253/pvfINszbAvppNxr411vwQp08QKxVtkEjpFsu4xK5CpVxHoJ
+      saaron@Galactapus-III.local
+  inqty:
+    type: integer
+    minimum: 1
+    maximum: 3
+    default: 1
+    title: Quantity
+    description: How many VMs?
+resources:
+  Cloud_LoadBalancer_1:
+    type: Cloud.LoadBalancer
+    metadata:
+      layoutPosition:
+      - 0
+      - 0
+    properties:
+      name: TITOLoadBalancer
+      count: 1
+      routes:
+      - instancePort: 80
+        instanceProtocol: HTTP
+        protocol: HTTP
+        port: 80
+      network: ${resource.Web_Network.name}
+      instances: ${resource.FrontEnd.id}
+      internetFacing: true
+  FrontEnd:
+    type: Cloud.Machine
+    dependsOn:
+    - MySQL
+    metadata:
+      layoutPosition:
+      - 0
+      - 1
+    properties:
+      count: ${input.inqty}
+      image: Ubuntu20
+      flavor: 1vCPU-2GB
+      remoteAccess:
+        username: vmadmin
+        authentication: publicPrivateKey
+        sshKey: ${input.inSSHkey}
+      storage:
+        constraints:
+        - tag: vl-sp:nfs
+      cloudConfigSettings:
+        phoneHomeFailOnTimeout: true
+        phoneHomeShouldWait: true
+        phoneHomeTimeouSeconds: 600
+      cloudConfig: "#cloud-config\n# log all cloud-init process output (info & errors)\
+        \ to a logfile\noutput: {all: \">> /var/log/cloud-init-output.log\"}\npackages:\n\
+        \ - git\nruncmd:\n - sudo apt install apache2 --assume-yes\n - sudo git clone\
+        \ https://github.com/riazvm/samplecreds.git\n - sudo DEBIAN_FRONTEND=noninteractive\
+        \ apt-get install -y python-pip python-dev --assume-yes\n - sudo apt install\
+        \ git php libapache2-mod-php php-mysql php-curl --assume-yes\n - su - vmadmin\n\
+        \ - eval \"$(ssh-agent -s)\"\n - sudo cd /home/vmadmin/.ssh/\n - sudo cp /samplecreds/gitcreds/id_rsa\
+        \ /home/vmadmin/.ssh/.\n - sudo chmod 400 /home/vmadmin/.ssh/id_rsa\n - eval\
+        \ \"$(ssh-agent -s)\"\n - ssh-add -k /home/vmadmin/.ssh/id_rsa\n - ssh -o\
+        \ StrictHostKeyChecking=no -T git@github.com\n - git clone git@github.com:riazm-vmware/OperationSaaS.git\n\
+        \ - cd /var/www/html\n - sudo cp -r /OperationSaaS/Tito .\n - sudo chmod +x\
+        \ Tito/asset/Deployment/CloudAssembly/apache/*\n - sudo cp Tito/asset/Deployment/CloudAssembly/apache/dir.conf\
+        \ /etc/apache2/mods-enabled/dir.conf\n - sudo printf '\\n export TITODBSERVER=${resource.MySQL.networks[0].address}'\
+        \ >> Tito/asset/Deployment/CloudAssembly/apache/envvars\n - sudo printf '\\\
+        n export TITODBUSERNAME=Tito' >> Tito/asset/Deployment/CloudAssembly/apache/envvars\n\
+        \ - sudo printf '\\n export TITODBPASSWORD=VMware1!' >> Tito/asset/Deployment/CloudAssembly/apache/envvars\n\
+        \ - sudo printf '\\n export MAPSKEY=${input.inmapsapikey}' >> Tito/asset/Deployment/CloudAssembly/apache/envvars\
+        \ \n - sudo cp Tito/asset/Deployment/CloudAssembly/apache/envvars /etc/apache2/envvars\n\
+        \ - echo ${resource.MySQL.id}\n - echo ${resource.MySQL.networks[0].address}\n\
+        \ - sudo systemctl restart apache2\n"
+      name: FE
+      networks:
+      - name: ${resource.Web_Network.name}
+        network: ${resource.Web_Network.id}
+      assignment: static
+  MySQL:
+    type: Cloud.Machine
+    metadata:
+      layoutPosition:
+      - 0
+      - 2
+    properties:
+      count: 1
+      image: Ubuntu20
+      flavor: 1vCPU-2GB
+      tags:
+      - key: tito
+        value: tito
+      - key: environment
+        value: dev
+      remoteAccess:
+        username: vmadmin
+        authentication: publicPrivateKey
+        sshKey: ${input.inSSHkey}
+      storage:
+        constraints:
+        - tag: vl-sp:nfs
+      cloudConfig: '#cloud-config
+
+        # log all cloud-init process output (info & errors) to a logfile
+
+        output: {all: ">> /var/log/cloud-init-output.log"}
+
+        runcmd:
+
+        - sudo apt-get update
+
+        - sudo git clone https://github.com/riazvm/samplecreds.git
+
+        - sudo DEBIAN_FRONTEND=noninteractive apt-get install -y python-pip python-dev
+        --assume-yes
+
+        - echo "mysql-server mysql-server/root_password password Tito2016" | sudo
+        debconf-set-selections
+
+        - echo "mysql-server mysql-server/root_password_again password Tito2016" |
+        sudo debconf-set-selections
+
+        - sudo apt-get -y install mysql-server
+
+        - sudo apt-get install git unzip --assume-yes
+
+        - su - vmadmin
+
+        - eval "$(ssh-agent -s)"
+
+        - sudo cp /samplecreds/gitcreds/id_rsa /home/vmadmin/.ssh/.
+
+        - sudo chmod 400 /home/vmadmin/.ssh/id_rsa
+
+        - eval "$(ssh-agent -s)"
+
+        - ssh-add -k /home/vmadmin/.ssh/id_rsa
+
+        - sudo cd /home/vmadmin/.ssh/
+
+        - ssh -o StrictHostKeyChecking=no -T git@github.com
+
+        - git clone git@github.com:riazm-vmware/OperationSaaS.git
+
+        - sudo cp -r /OperationSaaS/Tito /.
+
+        - sudo cp /Tito/asset/Deployment/CloudAssembly/titodb/mysqld.cnf /etc/mysql/mysql.conf.d/mysqld.cnf
+
+        - sudo systemctl restart mysql.service
+
+        - cd /Tito/asset/Deployment/CloudAssembly/titodb/
+
+        - sudo chmod 777 *
+
+        - sudo chmod +x *
+
+        - export MYSQL_ROOT_PASSWORD=Tito2016
+
+        - sudo mysql --user=root --password=$MYSQL_ROOT_PASSWORD < create-tito-db.sql
+
+        '
+      networks:
+      - name: ${resource.Database_Network.name}
+        network: ${resource.Database_Network.id}
+      assignment: static
+      name: DB
+  Web_Network:
+    type: Cloud.Network
+    metadata:
+      layoutPosition:
+      - 1
+      - 0
+    properties:
+      name: WebNetwork
+      networkType: existing
+      constraints:
+      - tag: vl-zone:web
+  Database_Network:
+    type: Cloud.Network
+    metadata:
+      layoutPosition:
+      - 2
+      - 0
+    properties:
+      name: DatabaseNetwork
+      networkType: existing
+      constraints:
+      - tag: vl-zone:data
