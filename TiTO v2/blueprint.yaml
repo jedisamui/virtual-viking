@@ -1,5 +1,5 @@
 name: TiTO v2
-version: 0.0.5
+version: 0.0.6
 inputs:
   inmapsapikey:
     type: string
@@ -29,7 +29,7 @@ resources:
       routes:
       - protocol: HTTP
         port: '80'
-      network: ${resource.Web_Network.name}
+      network: ${resource.Web_NSX_Network.name}
       instances: ${resource.FrontEnd.id}
   FrontEnd:
     type: Cloud.Machine
@@ -52,17 +52,12 @@ resources:
         - tag: vl-sp:nfs
       cloudConfig: "#cloud-config\n# log all cloud-init process output (info & errors)\
         \ to a logfile\noutput: {all: \">> /var/log/cloud-init-output.log\"}\npackages:\n\
-        \ - git\nruncmd:\n - sudo apt install apache2 --assume-yes\n - sudo git clone\
-        \ https://github.com/riazvm/samplecreds.git\n - sudo DEBIAN_FRONTEND=noninteractive\
-        \ apt-get install -y python-pip python-dev --assume-yes\n - sudo apt install\
+        \ - git\nruncmd:\n - sudo apt install apache2 --assume-yes\n - sudo apt install\
         \ git php libapache2-mod-php php-mysql php-curl --assume-yes\n - su - vmadmin\n\
-        \ - eval \"$(ssh-agent -s)\"\n - sudo cd /home/vmadmin/.ssh/\n - sudo cp /samplecreds/gitcreds/id_rsa\
-        \ /home/vmadmin/.ssh/.\n - sudo chmod 400 /home/vmadmin/.ssh/id_rsa\n - eval\
-        \ \"$(ssh-agent -s)\"\n - ssh-add -k /home/vmadmin/.ssh/id_rsa\n - ssh -o\
-        \ StrictHostKeyChecking=no -T git@github.com\n - git clone git@github.com:riazm-vmware/OperationSaaS.git\n\
-        \ - cd /var/www/html\n - sudo cp -r /OperationSaaS/Tito .\n - sudo chmod +x\
-        \ Tito/asset/Deployment/CloudAssembly/apache/*\n - sudo cp Tito/asset/Deployment/CloudAssembly/apache/dir.conf\
-        \ /etc/apache2/mods-enabled/dir.conf\n - sudo printf '\\n export TITODBSERVER=${resource.MySQL.networks[0].address}'\
+        \ - git clone git@github.com:riazm-vmware/OperationSaaS.git\n - cd /var/www/html\n\
+        \ - sudo cp -r /OperationSaaS/Tito .\n - sudo chmod +x Tito/asset/Deployment/CloudAssembly/apache/*\n\
+        \ - sudo cp Tito/asset/Deployment/CloudAssembly/apache/dir.conf /etc/apache2/mods-enabled/dir.conf\n\
+        \ - sudo printf '\\n export TITODBSERVER=${resource.MySQL.networks[0].address}'\
         \ >> Tito/asset/Deployment/CloudAssembly/apache/envvars\n - sudo printf '\\\
         n export TITODBUSERNAME=Tito' >> Tito/asset/Deployment/CloudAssembly/apache/envvars\n\
         \ - sudo printf '\\n export TITODBPASSWORD=VMware1!' >> Tito/asset/Deployment/CloudAssembly/apache/envvars\n\
@@ -72,8 +67,8 @@ resources:
         \ - sudo systemctl restart apache2\n"
       name: FE
       networks:
-      - name: ${resource.Web_Network.name}
-        network: ${resource.Web_Network.id}
+      - name: ${resource.Web_NSX_Network.name}
+        network: ${resource.Web_NSX_Network.id}
       assignment: static
   MySQL:
     type: Cloud.Machine
@@ -106,36 +101,13 @@ resources:
 
         - sudo apt-get update
 
-        - sudo git clone https://github.com/riazvm/samplecreds.git
-
-        - sudo DEBIAN_FRONTEND=noninteractive apt-get install -y python-pip python-dev
-        --assume-yes
-
         - echo "mysql-server mysql-server/root_password password Tito2016" | sudo
         debconf-set-selections
 
         - echo "mysql-server mysql-server/root_password_again password Tito2016" |
         sudo debconf-set-selections
 
-        - sudo apt-get -y install mysql-server
-
-        - sudo apt-get install git unzip --assume-yes
-
         - su - vmadmin
-
-        - eval "$(ssh-agent -s)"
-
-        - sudo cp /samplecreds/gitcreds/id_rsa /home/vmadmin/.ssh/.
-
-        - sudo chmod 400 /home/vmadmin/.ssh/id_rsa
-
-        - eval "$(ssh-agent -s)"
-
-        - ssh-add -k /home/vmadmin/.ssh/id_rsa
-
-        - sudo cd /home/vmadmin/.ssh/
-
-        - ssh -o StrictHostKeyChecking=no -T git@github.com
 
         - git clone git@github.com:riazm-vmware/OperationSaaS.git
 
@@ -157,12 +129,12 @@ resources:
 
         '
       networks:
-      - name: ${resource.Database_Network.name}
-        network: ${resource.Database_Network.id}
+      - name: ${resource.Database_NSX_Network.name}
+        network: ${resource.Database_NSX_Network.id}
       assignment: static
       name: DB
-  Web_Network:
-    type: Cloud.Network
+  Web_NSX_Network:
+    type: Cloud.NSX.Network
     metadata:
       layoutPosition:
       - 1
@@ -172,8 +144,8 @@ resources:
       networkType: existing
       constraints:
       - tag: vl-zone:web
-  Database_Network:
-    type: Cloud.Network
+  Database_NSX_Network:
+    type: Cloud.NSX.Network
     metadata:
       layoutPosition:
       - 2
