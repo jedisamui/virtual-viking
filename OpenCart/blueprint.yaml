@@ -1,0 +1,138 @@
+name: OpenCart
+version: 0.0.1
+description: More Complex BP
+inputs:
+  env:
+    type: string
+    oneOf:
+    - title: Development
+      const: cloud.zone.region:ca-central-1
+    - title: Test
+      const: cloud.zone.region:east-us
+    - title: Production - Montreal
+      const: cloud.zone.region:montreal
+    - title: Production - Ottawa
+      const: cloud.zone.region:ottawa
+    title: Environment
+    description: Select Your Environment
+  user:
+    type: string
+    title: Username for System Admin Account
+    description: The username you would like to have for the installation.
+  pass:
+    type: string
+    encrypted: true
+    title: Password for ocuser for OpenCart.
+    description: The password you would like to have for OpenCart.
+resources:
+  frontend:
+    type: Cloud.Machine
+    dependsOn:
+    - mysql
+    metadata:
+      layoutPosition:
+      - 0
+      - 0
+    properties:
+      image: ubuntu 16.04
+      flavor: medium
+      cloudConfig: "repo_update: true\nrepo_upgrade: all\napt_source:\n  - source:\
+        \ deb http://archive.ubuntu.com/ubuntu main universe multiverse restricted\n\
+        \npackages:\n  - apache2\n  - php\n  - php-mysql\n  - libapache2-mod-php\n\
+        \  - php-mcrypt\n  - php-gd\n  - php-mbstring\n  - php-xml\n  - php-zip\n\
+        \  - php-curl\n  - mysql-server-5.7\n  - unzip\n   \nusers:\n  - name: ${input.user}\n\
+        \    sudo: ['ALL=(ALL) NOPASSWD:ALL']\n    groups: sudo\n    shell: /bin/bash\n\
+        \  - name: ocuser\n    sudo: ['ALL=(ALL) NOPASSWD:ALL']\n    groups: sudo\n\
+        \    shell: /bin/bash\n\nruncmd:\n  - systemctl restart apache2\n  - USER=ocuser\n\
+        \  - PASS=${input.pass}\n  - echo $USER:$PASS | /usr/sbin/chpasswd\n  - echo\
+        \ ${input.user}:$PASS | /usr/sbin/chpasswd\n  - sed -i \"s/PasswordAuthentication\
+        \ no/PasswordAuthentication yes/g\" /etc/ssh/sshd_config\n  - service ssh\
+        \ reload         \n  - git clone https://github.com/vmwarelab/opencart-demo.git\
+        \ /tmp/opencart\n  - mv /tmp/opencart /var/www/\n  - chown -R www-data.www-data\
+        \ /var/www/opencart\n  - chmod -R 775 /var/www/opencart\n  - tee /etc/apache2/sites-available/opencart.conf\
+        \ > /dev/null << EOF\n  - <VirtualHost *:80>\n  -   ServerName www.opencart.cmbu.local\n\
+        \  -   DocumentRoot /var/www/opencart\n  -   <Directory /var/www/opencart/>\n\
+        \  -     AllowOverride All\n  -     allow from all\n  -   </Directory>\n \
+        \ - </VirtualHost>\n  - EOF\n  - cd /etc/apache2/sites-available/\n  - a2ensite\
+        \ opencart.conf\n  - a2dissite 000-default.conf\n  - systemctl reload apache2\n\
+        \  - systemctl restart apache2\n  - echo \"[client]\" >> /etc/mysql/mysql.conf.d/mysqld.cnf\n\
+        \  - echo \"user=ocuser\" >> /etc/mysql/mysql.conf.d/mysqld.cnf\n  - echo\
+        \ \"password=$PASS\" >> /etc/mysql/mysql.conf.d/mysqld.cnf\n\n  - export cloudip=$(curl\
+        \ http://checkip.amazonaws.com/)\n  - export onpremip=$(ip route get 8.8.8.8\
+        \ | awk -F\"src \" 'NR==1{split($2,a,\" \");print a[1]}')\n\n  - mysqlip=${resource.mysql.networks[0].address}\n\
+        \n  - export ipaddr=${input.env == \"cloud.zone.region:montreal\" || input.env\
+        \ == \"cloud.zone.region:ottawa\" ? \"$onpremip\" : \"$cloudip\"}\n\n  - echo\
+        \ $cloudip > /tmp/cloudip\n  - echo $onpremip > /tmp/onpreip\n  - echo $ipaddr\
+        \ > /tmp/ipaddr\n  \n  - mysql -u $USER -h $mysqlip -e 'source /var/www/opencart/install/opencart.sql'\n\
+        \  - mysql -u $USER -h $mysqlip -e \"INSERT INTO oc_user (user_id,user_group_id,username,password,salt,firstname,lastname,email,image,code,ip,status,date_added)\
+        \ VALUES (1,1,'admin','5feaa046f6927df3d744007ec1491dba838f672e','c4wnfrq9J','demo','user','admin@admin.com','none','none','none',1,'2019-01-31\
+        \ 06:29:09')\" opencart\n\n  - sed -i \"s/frontendiphere/$ipaddr/g\" /var/www/opencart/config.php\n\
+        \  - sed -i \"s/dbiphere/$mysqlip/g\" /var/www/opencart/config.php\n  - sed\
+        \ -i \"s/usernamehere/$USER/g\" /var/www/opencart/config.php\n  - sed -i \"\
+        s/passwordhere/${input.pass}/g\" /var/www/opencart/config.php\n  - sed -i\
+        \ \"s/frontendiphere/$ipaddr/g\" /var/www/opencart/admin/config.php\n  - sed\
+        \ -i \"s/dbiphere/$mysqlip/g\" /var/www/opencart/admin/config.php\n  - sed\
+        \ -i \"s/usernamehere/$USER/g\" /var/www/opencart/admin/config.php\n  - sed\
+        \ -i \"s/passwordhere/$PASS/g\" /var/www/opencart/admin/config.php\n  \n \
+        \ - systemctl reload apache2\n  - systemctl restart apache2\n  - echo \"ocuser\
+        \ ALL=(ALL) NOPASSWD:ALL\" >> /etc/sudoers\n  - echo 'Cloud-init is done!'\
+        \ >> /tmp/finished.txt\n"
+      constraints:
+      - tag: ${input.env}
+      networks:
+      - name: ${resource.Cloud_Network_1.name}
+        network: ${resource.Cloud_Network_1.id}
+        assignment: '${input.env == "cloud.zone.region:montreal" || input.env == "cloud.zone.region:ottawa"  ?
+          "static" : ""}'
+      storage: {}
+  mysql:
+    type: Cloud.Machine
+    metadata:
+      layoutPosition:
+      - 0
+      - 1
+    properties:
+      image: ubuntu 16.04
+      flavor: medium
+      resourceGroupName: null
+      cloudConfig: "repo_update: true\nrepo_upgrade: all\napt_source:\n  - source:\
+        \ deb http://archive.ubuntu.com/ubuntu main universe multiverse restricted\n\
+        \npackages:\n  - mysql-server-5.7\n  - mysql-client\n  - unzip\n   \nusers:\n\
+        \  - name: ${input.user}\n    sudo: ['ALL=(ALL) NOPASSWD:ALL']\n    groups:\
+        \ sudo\n    shell: /bin/bash\n  - name: ocuser\n    sudo: ['ALL=(ALL) NOPASSWD:ALL']\n\
+        \    groups: sudo\n    shell: /bin/bash\n   \nruncmd:\n  - export DEBIAN_FRONTEND=noninteractive\n\
+        \  - USER=ocuser\n  - PASS=${input.pass}\n  - echo $USER:$PASS | /usr/sbin/chpasswd\n\
+        \  - echo ${input.user}:$PASS | /usr/sbin/chpasswd\n  - sed -i \"s/PasswordAuthentication\
+        \ no/PasswordAuthentication yes/g\" /etc/ssh/sshd_config\n  - service ssh\
+        \ reload       \n  - echo \"mysql-server-5.7 mysql-server/root_password password\
+        \ root\" | sudo debconf-set-selections\n  - echo \"mysql-server-5.7 mysql-server/root_password_again\
+        \ password root\" | sudo debconf-set-selections\n  - echo \"[client]\" >>\
+        \ /etc/mysql/mysql.conf.d/mysqld.cnf\n  - echo \"user=root\" >> /etc/mysql/mysql.conf.d/mysqld.cnf\n\
+        \  - echo \"password=root\" >> /etc/mysql/mysql.conf.d/mysqld.cnf\n  - echo\
+        \ \"user=ocuser\" >> /etc/mysql/mysql.conf.d/mysqld.cnf\n  - echo \"password=$PASS\"\
+        \ >> /etc/mysql/mysql.conf.d/mysqld.cnf         \n  - sed -i 's/bind-address/#bind-address/g'\
+        \ /etc/mysql/mysql.conf.d/mysqld.cnf\n  - systemctl restart mysql\n  - mysql\
+        \ -u root -e \"GRANT ALL ON *.* TO '$USER'@'%' IDENTIFIED BY '$PASS'\"\n \
+        \ - mysql -u root -e 'CREATE DATABASE opencart'\n  - mysql -u root -e 'USE\
+        \ opencart'\n  - mysql -u root -e 'flush privileges'\n  - echo 'Cloud-init\
+        \ is done!' >> /tmp/finished.txt\n"
+      constraints:
+      - tag: ${input.env}
+      userCustomprop: ABC
+      networks:
+      - name: ${resource.Cloud_Network_1.name}
+        network: ${resource.Cloud_Network_1.id}
+        assignment: '${input.env == "cloud.zone.region:montreal" || input.env == "cloud.zone.region:ottawa"  ?
+          "static" : ""}'
+  Cloud_Network_1:
+    type: Cloud.Network
+    metadata:
+      layoutPosition:
+      - 1
+      - 0
+    properties:
+      name: oc_network
+      networkType: existing
+      constraints:
+      - tag: '${input.env == "cloud.zone.region:montreal" || input.env == "cloud.zone.region:ottawa"  ?
+          "cloud.zone.network:management" : input.env }'
