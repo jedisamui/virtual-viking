@@ -1,12 +1,12 @@
-version: '12'
+version: 0.0.13
 inputs:
   inzone:
     type: string
     enum:
-    - zone:web
-    - zone:app
-    - zone:data
-    default: zone:web
+    - vik.net:web
+    - vik.net:app
+    - vik.net:data
+    default: vik.net:web
     title: Zone
     description: Zone
   inqty:
@@ -19,9 +19,11 @@ inputs:
   instor:
     type: string
     enum:
-    - stor:nfs
-    - stor:vsan
-    default: stor:nfs
+    - vik.stor:nfs
+    - vik.stor:vsan
+    - vik.stor:raid1
+    - vik.stor:raid5
+    default: vik.stor:raid1
     title: Storage
     description: Storage
   inName:
@@ -45,7 +47,6 @@ resources:
       capacityGb: ${input.inDisksize}
       constraints:
       - tag: ${input.instor}
-      - tag: ${input.inzone}
   Virtual_Machine_1:
     type: Cloud.vSphere.Machine
     metadata:
@@ -54,20 +55,17 @@ resources:
       - 1
     properties:
       userDefinedName: ${input.inName}
-      image: Photon
-      flavor: Medium
+      image: Photon3
+      flavor: 1vCPU-1GB
       count: ${input.inqty}
       constraints:
-      - tag: ca:site1
-      - tag: cluster:ready
-      - tag: ${input.inzone}
+      - tag: vik.ca:vsphere
       networks:
       - network: ${resource.Network_1.id}
-        assignment: dynamic
+        assignment: static
       storage:
         constraints:
         - tag: ${input.instor}
-        - tag: ${input.inzone}
       attachedDisks:
       - source: ${resource.Cloud_vSphere_Disk_1.id}
   Network_1:
