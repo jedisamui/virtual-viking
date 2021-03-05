@@ -1,5 +1,5 @@
 name: Basic Linux
-version: 0.0.32
+version: 0.0.33
 options:
   blueprintoptionsgitsync: true
   blueprintOptionGitDelete: false
@@ -15,7 +15,7 @@ resources:
       name: webserver
       image: Ubuntu20c
       flavor: 1vCPU-2GB
-      count: 3
+      count: 1
       storage:
         constraints:
         - tag: vik.stor:raid1
@@ -36,21 +36,13 @@ resources:
           shell: /bin/bash
         runcmd:
         - echo "Starting Hello World"
-        - - ls
-          - -l
-          - /
-        - - sh
-          - -xc
-          - 'echo $(date) '': hello world!'''
-        - - sh
-          - -c
-          - echo "=========hello world'========="
-        - sed -i -e '/^#PermitRootLogin/s/^.*$/PermitRootLogin yes/' /etc/ssh/sshd_config
-        - sed -i -e '/^PasswordAuthentication/s/^.*$/PasswordAuthentication yes/'
-          /etc/ssh/sshd_config
-        - - sh
-          - -c
-          - echo "Hello World " >> /home/vmadmin/hello.txt && date >> /home/vmadmin/hello.txt
+        - ls -l /
+        - sh -xc 'echo $(date) '': hello world!'
+        - sh -c echo "=========hello world'========="
+        - sed -i -e '/^#PermitRootLogin/s/^.*$/PermitRootLogin yes/'' /etc/ssh/sshd_config'
+        - sed -i -e '/^PasswordAuthentication/s/^.*$/PasswordAuthentication yes/''
+          /etc/ssh/sshd_config'
+        - sh -c echo "Hello World " >> /home/vmadmin/hello.txt && date >> /home/vmadmin/hello.txt
   webnet:
     type: Cloud.vSphere.Network
     metadata:
@@ -58,7 +50,6 @@ resources:
       - 1
       - 0
     properties:
-      name: webnet
       networkType: existing
       constraints:
       - tag: vik.net:web
