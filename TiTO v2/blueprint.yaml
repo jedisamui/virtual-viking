@@ -1,5 +1,5 @@
 name: TiTO v2
-version: 0.0.7
+version: 0.0.8
 inputs:
   inmapsapikey:
     type: string
@@ -46,15 +46,15 @@ resources:
         \ - git\nruncmd:\n - sudo apt install apache2 --assume-yes\n - sudo apt install\
         \ git php libapache2-mod-php php-mysql php-curl --assume-yes\n - su - vmadmin\n\
         \ - git clone git@github.com:riazm-vmware/OperationSaaS.git\n - cd /var/www/html\n\
-        \ - sudo cp -r /OperationSaaS/Tito .\n - sudo chmod +x Tito/asset/Deployment/CloudAssembly/apache/*\n\
+        \ - sudo cp -r /home/vmadmin/OperationSaaS/Tito .\n - sudo chmod +x Tito/asset/Deployment/CloudAssembly/apache/*\n\
         \ - sudo cp Tito/asset/Deployment/CloudAssembly/apache/dir.conf /etc/apache2/mods-enabled/dir.conf\n\
-        \ - sudo printf '\\n export TITODBSERVER=${resource.MySQL.networks[0].address}'\
-        \ >> Tito/asset/Deployment/CloudAssembly/apache/envvars\n - sudo printf '\\\
-        n export TITODBUSERNAME=Tito' >> Tito/asset/Deployment/CloudAssembly/apache/envvars\n\
-        \ - sudo printf '\\n export TITODBPASSWORD=VMware1!' >> Tito/asset/Deployment/CloudAssembly/apache/envvars\n\
-        \ - sudo printf '\\n export MAPSKEY=${input.inmapsapikey}' >> Tito/asset/Deployment/CloudAssembly/apache/envvars\
-        \ \n - sudo cp Tito/asset/Deployment/CloudAssembly/apache/envvars /etc/apache2/envvars\n\
-        \ - echo ${resource.MySQL.id}\n - echo ${resource.MySQL.networks[0].address}\n\
+        \ - su - root\n - sudo printf '\\n export TITODBSERVER=${resource.MySQL.networks[0].address}'\
+        \ >> /var/www/html/Tito/asset/Deployment/CloudAssembly/apache/envvars\n -\
+        \ sudo printf '\\n export TITODBUSERNAME=Tito' >> /var/www/html/Tito/asset/Deployment/CloudAssembly/apache/envvars\n\
+        \ - sudo printf '\\n export TITODBPASSWORD=VMware1!' >> /var/www/html/Tito/asset/Deployment/CloudAssembly/apache/envvars\n\
+        \ - sudo printf '\\n export MAPSKEY=${input.inmapsapikey}' >> /var/www/html/Tito/asset/Deployment/CloudAssembly/apache/envvars\n\
+        \ - sudo cp /var/www/html/Tito/asset/Deployment/CloudAssembly/apache/envvars\
+        \ /etc/apache2/envvars\n - echo ${resource.MySQL.id}\n - echo ${resource.MySQL.networks[0].address}\n\
         \ - sudo systemctl restart apache2\n"
       name: FE
       networks:
@@ -98,11 +98,13 @@ resources:
 
         - git clone git@github.com:riazm-vmware/OperationSaaS.git
 
-        - sudo cp -r /OperationSaaS/Tito /.
+        - sudo cp -r OperationSaaS/Tito /.
 
         - sudo cp /Tito/asset/Deployment/CloudAssembly/titodb/mysqld.cnf /etc/mysql/mysql.conf.d/mysqld.cnf
 
-        - sudo systemctl restart mysql.service
+        - sudo cp /etc/mysql/mysql.conf.d/mysqld.cnf /etc/mysql/mysql.cnf
+
+        - sudo systemctl start mysql.service
 
         - cd /Tito/asset/Deployment/CloudAssembly/titodb/
 
