@@ -1,5 +1,5 @@
 name: Basic Linux
-version: 0.0.31
+version: 0.0.32
 options:
   blueprintoptionsgitsync: true
   blueprintOptionGitDelete: false
@@ -35,6 +35,16 @@ resources:
           groups: sudo
           shell: /bin/bash
         runcmd:
+        - echo "Starting Hello World"
+        - - ls
+          - -l
+          - /
+        - - sh
+          - -xc
+          - 'echo $(date) '': hello world!'''
+        - - sh
+          - -c
+          - echo "=========hello world'========="
         - sed -i -e '/^#PermitRootLogin/s/^.*$/PermitRootLogin yes/' /etc/ssh/sshd_config
         - sed -i -e '/^PasswordAuthentication/s/^.*$/PasswordAuthentication yes/'
           /etc/ssh/sshd_config
