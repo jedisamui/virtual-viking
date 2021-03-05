@@ -1,5 +1,5 @@
 name: Basic Linux
-version: 0.0.33
+version: 0.0.34
 options:
   blueprintoptionsgitsync: true
   blueprintOptionGitDelete: false
@@ -15,34 +15,22 @@ resources:
       name: webserver
       image: Ubuntu20c
       flavor: 1vCPU-2GB
-      count: 1
       storage:
         constraints:
         - tag: vik.stor:raid1
       networks:
       - network: ${resource.webnet.id}
       assignment: static
-      cloudConfig:
-        users:
-        - name: vmadmin
-          plain_text_password: VMare1!
-          ssh-authorized-keys:
-          - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDXarzp9eEGTG8lDBtAQxXGNzdGNcWD8v6wMpS4jABPP+UqsbFP83vDFG5zdyVx+HyKuoHJyQZAEdJXsNfug9m6rdRAzCpPrkPf0vbO/FNehjpvsYrwJBm2VcBEu+hiPAEe7g/qpl20PKAviSutziuQaVR5PZS5NWFx5YCaDHSbhn5rFWLKfMXcts+Fd2aXN2CTIQh/Y5Cj7YXcYuxs+XqrECnLNwy85/BqQbaLN7lKRBpuEhJk8U5TiqlJ3FkarT3d3khblXuPZcroLRw2lrvrXD8n7IDCF4m1z253/pvfINszbAvppNxr411vwQp08QKxVtkEjpFsu4xK5CpVxHoJ
-            saaron@Galactapus-III.local
-          - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCklnTWzv21YSqnASzTHiA+V+JeHIyelKy5CRa0pHgMGj0z1QLNQGgDYSH8RWqDVJQVRMJZ3tUgAp9bdt+QwWRMHfCMkmT0xIeznN3HPdSMmqASY77L0dW+z8UqlBN678pqK5UVl/Z32xcCfYyC1+1KUvfNMVtF2FaNPZmloCQwhbZjlKtmev4PI87nyRE/hc/fX4b83O1BqVpWIrvminq0/sQz47ZTXaq2dpgt4uGNYvlq35vCgX1lf1TMtb41/rxZYwtataEbCrs50klqtghZSGgmW3vj9oq8F7iJptnK/ICm3Qy7IthkZzJcqT0H8TwvGbEFbM4WEHefHARJckGh
-          sudo:
-          - ALL=(ALL) NOPASSWD:ALL
-          groups: sudo
-          shell: /bin/bash
-        runcmd:
-        - echo "Starting Hello World"
-        - ls -l /
-        - sh -xc 'echo $(date) '': hello world!'
-        - sh -c echo "=========hello world'========="
-        - sed -i -e '/^#PermitRootLogin/s/^.*$/PermitRootLogin yes/'' /etc/ssh/sshd_config'
-        - sed -i -e '/^PasswordAuthentication/s/^.*$/PasswordAuthentication yes/''
-          /etc/ssh/sshd_config'
-        - sh -c echo "Hello World " >> /home/vmadmin/hello.txt && date >> /home/vmadmin/hello.txt
+      cloudConfig: "#cloud-config:\nusers:\n  - name: vmadmin\n    plain_text_password:\
+        \ VMare1!\n    ssh-authorized-keys:\n      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDXarzp9eEGTG8lDBtAQxXGNzdGNcWD8v6wMpS4jABPP+UqsbFP83vDFG5zdyVx+HyKuoHJyQZAEdJXsNfug9m6rdRAzCpPrkPf0vbO/FNehjpvsYrwJBm2VcBEu+hiPAEe7g/qpl20PKAviSutziuQaVR5PZS5NWFx5YCaDHSbhn5rFWLKfMXcts+Fd2aXN2CTIQh/Y5Cj7YXcYuxs+XqrECnLNwy85/BqQbaLN7lKRBpuEhJk8U5TiqlJ3FkarT3d3khblXuPZcroLRw2lrvrXD8n7IDCF4m1z253/pvfINszbAvppNxr411vwQp08QKxVtkEjpFsu4xK5CpVxHoJ\
+        \ saaron@Galactapus-III.local\n      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCklnTWzv21YSqnASzTHiA+V+JeHIyelKy5CRa0pHgMGj0z1QLNQGgDYSH8RWqDVJQVRMJZ3tUgAp9bdt+QwWRMHfCMkmT0xIeznN3HPdSMmqASY77L0dW+z8UqlBN678pqK5UVl/Z32xcCfYyC1+1KUvfNMVtF2FaNPZmloCQwhbZjlKtmev4PI87nyRE/hc/fX4b83O1BqVpWIrvminq0/sQz47ZTXaq2dpgt4uGNYvlq35vCgX1lf1TMtb41/rxZYwtataEbCrs50klqtghZSGgmW3vj9oq8F7iJptnK/ICm3Qy7IthkZzJcqT0H8TwvGbEFbM4WEHefHARJckGh\n\
+        \    sudo:\n      - 'ALL=(ALL) NOPASSWD:ALL'\n    groups: sudo\n    shell:\
+        \ /bin/bash\nruncmd:\n  - 'echo \"Starting Hello World\"'\n  - 'ls -l /'\n\
+        \  - 'sh -xc echo $(date) : hello world!'\n  - 'sh -c echo \"=========hello\
+        \ world=========\"'\n  - 'sed -i -e /^#PermitRootLogin/s/^.*$/PermitRootLogin\
+        \ yes/ /etc/ssh/sshd_config'\n  - 'sed -i -e /^PasswordAuthentication/s/^.*$/PasswordAuthentication\
+        \ yes/ /etc/ssh/sshd_config'\n  - 'sh -c echo \"Hello World \" >> /home/vmadmin/hello.txt\
+        \ && date >> /home/vmadmin/hello.txt'\n"
   webnet:
     type: Cloud.vSphere.Network
     metadata:
