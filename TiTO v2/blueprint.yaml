@@ -1,5 +1,5 @@
 name: TiTO v2
-version: 0.0.8
+version: 0.0.9
 inputs:
   inmapsapikey:
     type: string
@@ -103,6 +103,10 @@ resources:
         - sudo cp /Tito/asset/Deployment/CloudAssembly/titodb/mysqld.cnf /etc/mysql/mysql.conf.d/mysqld.cnf
 
         - sudo cp /etc/mysql/mysql.conf.d/mysqld.cnf /etc/mysql/mysql.cnf
+
+        - ''sed -i -e ''''/^query_cache_limit/^.*$/#query_cache_limit/'''' /etc/mysql/mysql.cnf''
+
+        - ''sed -i -e ''''/^query_cache_size/^.*$/#query_cache_size/'''' /etc/mysql/mysql.cnf''
 
         - sudo systemctl start mysql.service
 
