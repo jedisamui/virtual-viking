@@ -1,15 +1,10 @@
 name: TiTO v2
-version: 0.0.6
+version: 0.0.7
 inputs:
   inmapsapikey:
     type: string
     description: google maps api key
     default: AIzaSyA5ZDRG9r8hBWrtlGsEuJKU2KBg_cCV_Qk
-  inSSHkey:
-    type: string
-    description: VM SSH Key
-    default: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDXarzp9eEGTG8lDBtAQxXGNzdGNcWD8v6wMpS4jABPP+UqsbFP83vDFG5zdyVx+HyKuoHJyQZAEdJXsNfug9m6rdRAzCpPrkPf0vbO/FNehjpvsYrwJBm2VcBEu+hiPAEe7g/qpl20PKAviSutziuQaVR5PZS5NWFx5YCaDHSbhn5rFWLKfMXcts+Fd2aXN2CTIQh/Y5Cj7YXcYuxs+XqrECnLNwy85/BqQbaLN7lKRBpuEhJk8U5TiqlJ3FkarT3d3khblXuPZcroLRw2lrvrXD8n7IDCF4m1z253/pvfINszbAvppNxr411vwQp08QKxVtkEjpFsu4xK5CpVxHoJ
-      saaron@Galactapus-III.local
   inqty:
     type: integer
     minimum: 1
@@ -43,13 +38,9 @@ resources:
       count: ${input.inqty}
       image: Ubuntu20c
       flavor: 1vCPU-2GB
-      remoteAccess:
-        username: vmadmin
-        authentication: publicPrivateKey
-        sshKey: ${input.inSSHkey}
       storage:
         constraints:
-        - tag: vl-sp:nfs
+        - tag: vik.stor:raid1
       cloudConfig: "#cloud-config\n# log all cloud-init process output (info & errors)\
         \ to a logfile\noutput: {all: \">> /var/log/cloud-init-output.log\"}\npackages:\n\
         \ - git\nruncmd:\n - sudo apt install apache2 --assume-yes\n - sudo apt install\
@@ -84,13 +75,9 @@ resources:
         value: tito
       - key: environment
         value: dev
-      remoteAccess:
-        username: vmadmin
-        authentication: publicPrivateKey
-        sshKey: ${input.inSSHkey}
       storage:
         constraints:
-        - tag: vl-sp:nfs
+        - tag: vik.stor:raid1
       cloudConfig: '#cloud-config
 
         # log all cloud-init process output (info & errors) to a logfile
@@ -143,7 +130,7 @@ resources:
       name: WebNetwork
       networkType: existing
       constraints:
-      - tag: vl-zone:web
+      - tag: vik.net:web
   Database_NSX_Network:
     type: Cloud.NSX.Network
     metadata:
@@ -154,4 +141,4 @@ resources:
       name: DatabaseNetwork
       networkType: existing
       constraints:
-      - tag: vl-zone:data
+      - tag: vik.net:data
