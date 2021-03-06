@@ -1,5 +1,5 @@
 name: TiTO v2
-version: 0.0.13
+version: 0.0.14
 inputs:
   inmapsapikey:
     type: string
@@ -45,15 +45,16 @@ resources:
         \ to a logfile\noutput: {all: \">> /var/log/cloud-init-output.log\"}\npackages:\n\
         \ - git\nruncmd:\n - echo $(date) ' hello world!' >> /home/vmadmin/hello.txt\n\
         \ - echo \"Installing Packages\"\n - sudo apt install apache2 --assume-yes\n\
-        \ - sudo apt install git php libapache2-mod-php php-mysql php-curl --assume-yes\n\
-        \ - su - vmadmin\n - echo \"As vmadmin git tito\"\n - git clone https://github.com/jedisamui/Tito.git\n\
-        \ - cd /var/www/html\n - echo \"Copy Tito to var-www-html\"\n - sudo cp -r\
-        \ /home/vmadmin/Tito .\n - sudo chmod +x Tito/asset/Deployment/CloudAssembly/apache/*\n\
-        \ - sudo cp Tito/asset/Deployment/CloudAssembly/apache/dir.conf /etc/apache2/mods-enabled/dir.conf\n\
-        \ - echo \"Change to root\"\n - su - root\n - echo \"set exports\"\n - sudo\
-        \ printf '\\n export TITODBSERVER=${resource.MySQL.networks[0].address}' >>\
-        \ /var/www/html/Tito/asset/Deployment/CloudAssembly/apache/envvars\n - sudo\
-        \ printf '\\n export TITODBUSERNAME=Tito' >> /var/www/html/Tito/asset/Deployment/CloudAssembly/apache/envvars\n\
+        \ - sudo DEBIAN_FRONTEND=noninteractive apt-get install -y python-pip python-dev\
+        \ --assume-yes\n - sudo apt install git php libapache2-mod-php php-mysql php-curl\
+        \ --assume-yes\n - su - vmadmin\n - echo \"As vmadmin git tito\"\n - git clone\
+        \ https://github.com/jedisamui/Tito.git\n - cd /var/www/html\n - echo \"Copy\
+        \ Tito to var-www-html\"\n - sudo cp -r /home/vmadmin/Tito .\n - sudo chmod\
+        \ +x Tito/asset/Deployment/CloudAssembly/apache/*\n - sudo cp Tito/asset/Deployment/CloudAssembly/apache/dir.conf\
+        \ /etc/apache2/mods-enabled/dir.conf\n - echo \"Change to root\"\n - su -\
+        \ root\n - echo \"set exports\"\n - sudo printf '\\n export TITODBSERVER=${resource.MySQL.networks[0].address}'\
+        \ >> /var/www/html/Tito/asset/Deployment/CloudAssembly/apache/envvars\n -\
+        \ sudo printf '\\n export TITODBUSERNAME=Tito' >> /var/www/html/Tito/asset/Deployment/CloudAssembly/apache/envvars\n\
         \ - sudo printf '\\n export TITODBPASSWORD=VMware1!' >> /var/www/html/Tito/asset/Deployment/CloudAssembly/apache/envvars\n\
         \ - sudo printf '\\n export MAPSKEY=${input.inmapsapikey}' >> /var/www/html/Tito/asset/Deployment/CloudAssembly/apache/envvars\n\
         \ - sudo cp /var/www/html/Tito/asset/Deployment/CloudAssembly/apache/envvars\
@@ -84,16 +85,18 @@ resources:
       cloudConfig: "#cloud-config\n# log all cloud-init process output (info & errors)\
         \ to a logfile\noutput: {all: \">> /var/log/cloud-init-output.log\"}\nruncmd:\n\
         \ - echo $(date) ' hello world!' >> /home/vmadmin/hello.txt\n - echo \"Install\
-        \ updates\"\n - sudo apt-get update\n - echo \"mysql-server mysql-server/root_password\
-        \ password Tito2016\" | sudo debconf-set-selections\n - echo \"mysql-server\
-        \ mysql-server/root_password_again password Tito2016\" | sudo debconf-set-selections\n\
-        \ - echo \"change to vmadmin\"\n - su - vmadmin\n - echo \"git tito\"\n -\
-        \ git clone https://github.com/jedisamui/Tito.git\n - sudo cp -r /home/vmadmin/Tito\
-        \ /.\n - sudo cp /Tito/asset/Deployment/CloudAssembly/titodb/mysqld.cnf /etc/mysql/mysql.conf.d/mysqld.cnf\n\
-        \ - echo \"change to root\"\n - su - root\n - echo \"copy mysql.cnf\"\n -\
-        \ sudo cp -r /etc/mysql/mysql.conf.d/mysqld.cnf /etc/mysql/mysql.cnf\n - echo\
-        \ \"change back to vmadmin\n - su - vmadmin\n - echo \"start mysql\"\n - sudo\
-        \ systemctl start mysql.service\n - cd /Tito/asset/Deployment/CloudAssembly/titodb/\n\
+        \ updates\"\n - sudo apt-get update\n - sudo apt-get -y install mysql-server\n\
+        \ - sudo apt-get install git unzip --assume-yes\n - sudo DEBIAN_FRONTEND=noninteractive\
+        \ apt-get install -y python-pip python-dev --assume-yes\n - echo \"mysql-server\
+        \ mysql-server/root_password password Tito2016\" | sudo debconf-set-selections\n\
+        \ - echo \"mysql-server mysql-server/root_password_again password Tito2016\"\
+        \ | sudo debconf-set-selections\n - echo \"change to vmadmin\"\n - su - vmadmin\n\
+        \ - echo \"git tito\"\n - git clone https://github.com/jedisamui/Tito.git\n\
+        \ - sudo cp -r /home/vmadmin/Tito /.\n - sudo cp /Tito/asset/Deployment/CloudAssembly/titodb/mysqld.cnf\
+        \ /etc/mysql/mysql.conf.d/mysqld.cnf\n - echo \"change to root\"\n - su -\
+        \ root\n - echo \"copy mysql.cnf\"\n - sudo cp -r /etc/mysql/mysql.conf.d/mysqld.cnf\
+        \ /etc/mysql/mysql.cnf\n - echo \"change back to vmadmin\n - su - vmadmin\n\
+        \ - echo \"start mysql\"\n - sudo systemctl start mysql.service\n - cd /Tito/asset/Deployment/CloudAssembly/titodb/\n\
         \ - sudo chmod 777 *\n - sudo chmod +x *\n - export MYSQL_ROOT_PASSWORD=Tito2016\n\
         \ - echo \"create. mysql database\"\n - sudo mysql --user=root --password=$MYSQL_ROOT_PASSWORD\
         \ < create-tito-db.sql\n"
