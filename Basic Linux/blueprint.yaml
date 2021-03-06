@@ -1,16 +1,13 @@
 name: Basic Linux
-version: 0.0.35
-options:
-  blueprintoptionsgitsync: true
-  blueprintOptionGitDelete: false
+version: 0.0.36
 inputs: {}
 resources:
   webserver:
-    type: Cloud.vSphere.Machine
+    type: Cloud.Machine
     metadata:
       layoutPosition:
-      - 0
-      - 0
+      - 1
+      - 1
     properties:
       name: webserver
       image: Ubuntu20c
@@ -20,22 +17,14 @@ resources:
         - tag: vik.stor:raid1
       networks:
       - network: ${resource.webnet.id}
-      assignment: dynamic
-      cloudConfig: "users:\n  - name: vmadmin\n    plain_text_password: VMare1!\n\
-        \    ssh-authorized-keys:\n      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDXarzp9eEGTG8lDBtAQxXGNzdGNcWD8v6wMpS4jABPP+UqsbFP83vDFG5zdyVx+HyKuoHJyQZAEdJXsNfug9m6rdRAzCpPrkPf0vbO/FNehjpvsYrwJBm2VcBEu+hiPAEe7g/qpl20PKAviSutziuQaVR5PZS5NWFx5YCaDHSbhn5rFWLKfMXcts+Fd2aXN2CTIQh/Y5Cj7YXcYuxs+XqrECnLNwy85/BqQbaLN7lKRBpuEhJk8U5TiqlJ3FkarT3d3khblXuPZcroLRw2lrvrXD8n7IDCF4m1z253/pvfINszbAvppNxr411vwQp08QKxVtkEjpFsu4xK5CpVxHoJ\
-        \ saaron@Galactapus-III.local\n      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCklnTWzv21YSqnASzTHiA+V+JeHIyelKy5CRa0pHgMGj0z1QLNQGgDYSH8RWqDVJQVRMJZ3tUgAp9bdt+QwWRMHfCMkmT0xIeznN3HPdSMmqASY77L0dW+z8UqlBN678pqK5UVl/Z32xcCfYyC1+1KUvfNMVtF2FaNPZmloCQwhbZjlKtmev4PI87nyRE/hc/fX4b83O1BqVpWIrvminq0/sQz47ZTXaq2dpgt4uGNYvlq35vCgX1lf1TMtb41/rxZYwtataEbCrs50klqtghZSGgmW3vj9oq8F7iJptnK/ICm3Qy7IthkZzJcqT0H8TwvGbEFbM4WEHefHARJckGh\n\
-        \    sudo: ['ALL=(ALL) NOPASSWD:ALL']\n    groups: sudo\n    shell: /bin/bash\n\
-        runcmd:\n  - echo \"Starting Hello World\"\n  - ls -l /\n  - echo $(date)\
-        \ : 'hello world!'\n  - echo \"=========hello world=========\"\n  - sed -i\
-        \ \"s/#PermitRootLogin/s/^.*$/PermitRootLogin yes/g\" /etc/ssh/sshd_config\n\
-        \  - sed -i \"s/PasswordAuthentication no/PasswordAuthentication yes/g\" /etc/ssh/sshd_config\n\
-        \  - echo \"Hello World \" >> /home/vmadmin/hello.txt && date >> /home/vmadmin/hello.txt\n\
+      assignment: static
+      cloudConfig: "#cloud-config\nruncmd:\n  - echo $(date) ' hello world!' >> /home/vmadmin/hello.txt\n\
         \  - echo 'Cloud-init is done!' >> /tmp/finished.txt\n"
   webnet:
-    type: Cloud.vSphere.Network
+    type: Cloud.NSX.Network
     metadata:
       layoutPosition:
-      - 1
+      - 2
       - 0
     properties:
       networkType: existing
