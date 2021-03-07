@@ -1,5 +1,5 @@
 name: OpenCart
-version: 0.0.2
+version: 0.0.3
 description: More Complex BP
 inputs:
   inenv:
@@ -13,6 +13,7 @@ inputs:
       const: vik.zone.azure:us-east
     title: Environment
     description: Select Your Environment
+    default: vik.zone.vsphere:dev
   inuser:
     type: string
     title: Username for System Admin Account
