@@ -1,11 +1,11 @@
 name: OpenCart
-version: 0.0.3
+version: 0.0.4
 description: More Complex BP
 inputs:
   inenv:
     type: string
     oneOf:
-    - title: Development
+    - title: Development - vSphere
       const: vik.zone.vsphere:dev
     - title: Production - AWS US East
       const: vik.zone.aws:us-east
