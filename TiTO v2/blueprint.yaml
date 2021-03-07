@@ -1,5 +1,5 @@
 name: TiTO v2
-version: 0.0.16
+version: 0.0.17
 inputs:
   inmapsapikey:
     type: string
@@ -84,14 +84,8 @@ resources:
         - tag: vik.stor:raid1
       cloudConfig: "#cloud-config\n# log all cloud-init process output (info & errors)\
         \ to a logfile\noutput: {all: \">> /var/log/cloud-init-output.log\"}\nruncmd:\n\
-        \ - echo $(date) ' hello world!' >> /home/vmadmin/hello.txt\n - echo \"Install\
-        \ updates\"\n - sudo apt-get update\n - sudo apt-get -y install mysql-server\n\
-        \ - sudo apt-get install git unzip --assume-yes\n - sudo DEBIAN_FRONTEND=noninteractive\
-        \ apt-get install -y python-pip python-dev --assume-yes\n - echo \"mysql-server\
-        \ mysql-server/root_password password Tito2016\" | sudo debconf-set-selections\n\
-        \ - echo \"mysql-server mysql-server/root_password_again password Tito2016\"\
-        \ | sudo debconf-set-selections\n - echo \"change to vmadmin\"\n - su - vmadmin\n\
-        \ - echo \"git tito\"\n - git clone https://github.com/jedisamui/Tito.git\n\
+        \ - echo $(date) ' hello world!' >> /home/vmadmin/hello.txt\n - echo \"change\
+        \ to vmadmin\"\n - su - vmadmin\n - echo \"git tito\"\n - git clone https://github.com/jedisamui/Tito.git\n\
         \ - sudo cp -r /home/vmadmin/Tito /.\n - sudo cp /Tito/asset/Deployment/CloudAssembly/titodb/mysqld.cnf\
         \ /etc/mysql/mysql.conf.d/mysqld.cnf\n - echo \"change to root\"\n - su -\
         \ root\n - echo \"copy mysql.cnf\"\n - sudo cp -r /etc/mysql/mysql.conf.d/mysqld.cnf\
