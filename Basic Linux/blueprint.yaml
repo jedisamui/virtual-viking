@@ -1,5 +1,5 @@
 name: Basic Linux
-version: 0.0.36
+version: 0.0.38
 inputs: {}
 resources:
   webserver:
@@ -10,7 +10,7 @@ resources:
       - 1
     properties:
       name: webserver
-      image: Ubuntu20c
+      image: Ubuntu16c
       flavor: 1vCPU-2GB
       storage:
         constraints:
