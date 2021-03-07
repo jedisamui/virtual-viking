@@ -1,25 +1,23 @@
 name: OpenCart
-version: 0.0.1
+version: 0.0.2
 description: More Complex BP
 inputs:
-  env:
+  inenv:
     type: string
     oneOf:
     - title: Development
-      const: cloud.zone.region:ca-central-1
-    - title: Test
-      const: cloud.zone.region:east-us
-    - title: Production - Montreal
-      const: cloud.zone.region:montreal
-    - title: Production - Ottawa
-      const: cloud.zone.region:ottawa
+      const: vik.zone.vsphere:dev
+    - title: Production - AWS US East
+      const: vik.zone.aws:us-east
+    - title: Production - Azure US East
+      const: vik.zone.azure:us-east
     title: Environment
     description: Select Your Environment
-  user:
+  inuser:
     type: string
     title: Username for System Admin Account
     description: The username you would like to have for the installation.
-  pass:
+  inpass:
     type: string
     encrypted: true
     title: Password for ocuser for OpenCart.
@@ -34,18 +32,21 @@ resources:
       - 0
       - 0
     properties:
-      image: ubuntu 16.04
-      flavor: medium
+      image: ubuntu16c
+      flavor: 1vCPU-2GB
+      storage:
+        constraints:
+        - tag: vik.stor:raid1
       cloudConfig: "repo_update: true\nrepo_upgrade: all\napt_source:\n  - source:\
         \ deb http://archive.ubuntu.com/ubuntu main universe multiverse restricted\n\
         \npackages:\n  - apache2\n  - php\n  - php-mysql\n  - libapache2-mod-php\n\
         \  - php-mcrypt\n  - php-gd\n  - php-mbstring\n  - php-xml\n  - php-zip\n\
-        \  - php-curl\n  - mysql-server-5.7\n  - unzip\n   \nusers:\n  - name: ${input.user}\n\
+        \  - php-curl\n  - mysql-server-5.7\n  - unzip\n   \nusers:\n  - name: ${input.inuser}\n\
         \    sudo: ['ALL=(ALL) NOPASSWD:ALL']\n    groups: sudo\n    shell: /bin/bash\n\
         \  - name: ocuser\n    sudo: ['ALL=(ALL) NOPASSWD:ALL']\n    groups: sudo\n\
         \    shell: /bin/bash\n\nruncmd:\n  - systemctl restart apache2\n  - USER=ocuser\n\
-        \  - PASS=${input.pass}\n  - echo $USER:$PASS | /usr/sbin/chpasswd\n  - echo\
-        \ ${input.user}:$PASS | /usr/sbin/chpasswd\n  - sed -i \"s/PasswordAuthentication\
+        \  - PASS=${input.inpass}\n  - echo $USER:$PASS | /usr/sbin/chpasswd\n  -\
+        \ echo ${input.inuser}:$PASS | /usr/sbin/chpasswd\n  - sed -i \"s/PasswordAuthentication\
         \ no/PasswordAuthentication yes/g\" /etc/ssh/sshd_config\n  - service ssh\
         \ reload         \n  - git clone https://github.com/vmwarelab/opencart-demo.git\
         \ /tmp/opencart\n  - mv /tmp/opencart /var/www/\n  - chown -R www-data.www-data\
@@ -60,16 +61,17 @@ resources:
         \ \"password=$PASS\" >> /etc/mysql/mysql.conf.d/mysqld.cnf\n\n  - export cloudip=$(curl\
         \ http://checkip.amazonaws.com/)\n  - export onpremip=$(ip route get 8.8.8.8\
         \ | awk -F\"src \" 'NR==1{split($2,a,\" \");print a[1]}')\n\n  - mysqlip=${resource.mysql.networks[0].address}\n\
-        \n  - export ipaddr=${input.env == \"cloud.zone.region:montreal\" || input.env\
-        \ == \"cloud.zone.region:ottawa\" ? \"$onpremip\" : \"$cloudip\"}\n\n  - echo\
-        \ $cloudip > /tmp/cloudip\n  - echo $onpremip > /tmp/onpreip\n  - echo $ipaddr\
-        \ > /tmp/ipaddr\n  \n  - mysql -u $USER -h $mysqlip -e 'source /var/www/opencart/install/opencart.sql'\n\
+        \n  - export ipaddr=${input.inenv == \"vik.zone.vsphere:dev\" || input.inenv\
+        \ == \"vik.zone.aws:us-east\" || input.inenv == \"vik.zone.azure:us-east\"\
+        \ ? \"$onpremip\" : \"$cloudip\"}\n\n  - echo $cloudip > /tmp/cloudip\n  -\
+        \ echo $onpremip > /tmp/onpreip\n  - echo $ipaddr > /tmp/ipaddr\n  \n  - mysql\
+        \ -u $USER -h $mysqlip -e 'source /var/www/opencart/install/opencart.sql'\n\
         \  - mysql -u $USER -h $mysqlip -e \"INSERT INTO oc_user (user_id,user_group_id,username,password,salt,firstname,lastname,email,image,code,ip,status,date_added)\
         \ VALUES (1,1,'admin','5feaa046f6927df3d744007ec1491dba838f672e','c4wnfrq9J','demo','user','admin@admin.com','none','none','none',1,'2019-01-31\
         \ 06:29:09')\" opencart\n\n  - sed -i \"s/frontendiphere/$ipaddr/g\" /var/www/opencart/config.php\n\
         \  - sed -i \"s/dbiphere/$mysqlip/g\" /var/www/opencart/config.php\n  - sed\
         \ -i \"s/usernamehere/$USER/g\" /var/www/opencart/config.php\n  - sed -i \"\
-        s/passwordhere/${input.pass}/g\" /var/www/opencart/config.php\n  - sed -i\
+        s/passwordhere/${input.inpass}/g\" /var/www/opencart/config.php\n  - sed -i\
         \ \"s/frontendiphere/$ipaddr/g\" /var/www/opencart/admin/config.php\n  - sed\
         \ -i \"s/dbiphere/$mysqlip/g\" /var/www/opencart/admin/config.php\n  - sed\
         \ -i \"s/usernamehere/$USER/g\" /var/www/opencart/admin/config.php\n  - sed\
@@ -78,13 +80,12 @@ resources:
         \ ALL=(ALL) NOPASSWD:ALL\" >> /etc/sudoers\n  - echo 'Cloud-init is done!'\
         \ >> /tmp/finished.txt\n"
       constraints:
-      - tag: ${input.env}
+      - tag: ${input.inenv}
       networks:
-      - name: ${resource.Cloud_Network_1.name}
-        network: ${resource.Cloud_Network_1.id}
-        assignment: '${input.env == "cloud.zone.region:montreal" || input.env == "cloud.zone.region:ottawa"  ?
-          "static" : ""}'
-      storage: {}
+      - name: ${resource.Web_Network_1.name}
+        network: ${resource.Web_Network_1.id}
+        assignment: '${input.inenv == "vik.zone.vsphere:dev" || input.inenv == "vik.zone.aws:us-east"
+          || input.inenv == "vik.zone.azure:us-east" ? "static" : ""}'
   mysql:
     type: Cloud.Machine
     metadata:
@@ -92,17 +93,19 @@ resources:
       - 0
       - 1
     properties:
-      image: ubuntu 16.04
-      flavor: medium
-      resourceGroupName: null
+      image: ubuntu16c
+      flavor: 1vCPU-2GB
+      storage:
+        constraints:
+        - tag: vik.stor:raid1
       cloudConfig: "repo_update: true\nrepo_upgrade: all\napt_source:\n  - source:\
         \ deb http://archive.ubuntu.com/ubuntu main universe multiverse restricted\n\
         \npackages:\n  - mysql-server-5.7\n  - mysql-client\n  - unzip\n   \nusers:\n\
-        \  - name: ${input.user}\n    sudo: ['ALL=(ALL) NOPASSWD:ALL']\n    groups:\
+        \  - name: ${input.inuser}\n    sudo: ['ALL=(ALL) NOPASSWD:ALL']\n    groups:\
         \ sudo\n    shell: /bin/bash\n  - name: ocuser\n    sudo: ['ALL=(ALL) NOPASSWD:ALL']\n\
         \    groups: sudo\n    shell: /bin/bash\n   \nruncmd:\n  - export DEBIAN_FRONTEND=noninteractive\n\
-        \  - USER=ocuser\n  - PASS=${input.pass}\n  - echo $USER:$PASS | /usr/sbin/chpasswd\n\
-        \  - echo ${input.user}:$PASS | /usr/sbin/chpasswd\n  - sed -i \"s/PasswordAuthentication\
+        \  - USER=ocuser\n  - PASS=${input.inpass}\n  - echo $USER:$PASS | /usr/sbin/chpasswd\n\
+        \  - echo ${input.inuser}:$PASS | /usr/sbin/chpasswd\n  - sed -i \"s/PasswordAuthentication\
         \ no/PasswordAuthentication yes/g\" /etc/ssh/sshd_config\n  - service ssh\
         \ reload       \n  - echo \"mysql-server-5.7 mysql-server/root_password password\
         \ root\" | sudo debconf-set-selections\n  - echo \"mysql-server-5.7 mysql-server/root_password_again\
@@ -117,22 +120,21 @@ resources:
         \ opencart'\n  - mysql -u root -e 'flush privileges'\n  - echo 'Cloud-init\
         \ is done!' >> /tmp/finished.txt\n"
       constraints:
-      - tag: ${input.env}
+      - tag: ${input.inenv}
       userCustomprop: ABC
       networks:
-      - name: ${resource.Cloud_Network_1.name}
-        network: ${resource.Cloud_Network_1.id}
-        assignment: '${input.env == "cloud.zone.region:montreal" || input.env == "cloud.zone.region:ottawa"  ?
-          "static" : ""}'
-  Cloud_Network_1:
+      - name: ${resource.Web_Network_1.name}
+        network: ${resource.Web_Network_1.id}
+        assignment: '${input.inenv == "vik.zone.vsphere:dev" || input.inenv == "vik.zone.aws:us-east"
+          || input.inenv == "vik.zone.azure:us-east" ? "static" : ""}'
+  Web_Network_1:
     type: Cloud.Network
     metadata:
       layoutPosition:
       - 1
       - 0
     properties:
-      name: oc_network
+      name: web_network
       networkType: existing
       constraints:
-      - tag: '${input.env == "cloud.zone.region:montreal" || input.env == "cloud.zone.region:ottawa"  ?
-          "cloud.zone.network:management" : input.env }'
+      - tag: vik.net:web
