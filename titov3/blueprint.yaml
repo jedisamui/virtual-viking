@@ -1,0 +1,131 @@
+name: titov3
+version: 0.0.19
+inputs:
+  inmapsapikey:
+    type: string
+    description: google maps api key
+    default: AIzaSyA5ZDRG9r8hBWrtlGsEuJKU2KBg_cCV_Qk
+  inqty:
+    type: integer
+    minimum: 1
+    maximum: 3
+    default: 1
+    title: Quantity
+    description: How many VMs?
+resources:
+  LoadBalancer_Network:
+    type: Cloud.NSX.Network
+    metadata:
+      layoutPosition:
+      - 0
+      - 0
+    properties:
+      networkType: existing
+  Cloud_NSX_LoadBalancer:
+    type: Cloud.NSX.LoadBalancer
+    metadata:
+      layoutPosition:
+      - 1
+      - 0
+    properties:
+      name: TITOLoadBalancer
+      routes:
+      - protocol: HTTP
+        port: '80'
+      network: ${resource.LoadBalancer_Network.name}
+      instances: ${resource.FrontEnd.id}
+  FrontEnd:
+    type: Cloud.Machine
+    dependsOn:
+    - MySQL
+    metadata:
+      layoutPosition:
+      - 1
+      - 1
+    properties:
+      count: ${input.inqty}
+      image: Ubuntu16c
+      flavor: 1vCPU-2GB
+      storage:
+        constraints:
+        - tag: vik.stor:raid1
+      cloudConfig: "#cloud-config\n# log all cloud-init process output (info & errors)\
+        \ to a logfile\noutput: {all: \">> /var/log/cloud-init-output.log\"}\npackages:\n\
+        \ - git\nruncmd:\n - echo $(date) ' hello world!' >> /home/vmadmin/hello.txt\n\
+        \ - echo \"Installing Packages\"\n - sudo apt install apache2 --assume-yes\n\
+        \ - sudo DEBIAN_FRONTEND=noninteractive apt-get install -y python-pip python-dev\
+        \ --assume-yes\n - sudo apt install git php libapache2-mod-php php-mysql php-curl\
+        \ --assume-yes\n - su - vmadmin\n - echo \"As vmadmin git tito\"\n - git clone\
+        \ https://github.com/jedisamui/Tito.git\n - cd /var/www/html\n - echo \"Copy\
+        \ Tito to var-www-html\"\n - sudo cp -r /home/vmadmin/Tito .\n - sudo chmod\
+        \ +x Tito/asset/Deployment/CloudAssembly/apache/*\n - sudo cp Tito/asset/Deployment/CloudAssembly/apache/dir.conf\
+        \ /etc/apache2/mods-enabled/dir.conf\n - echo \"Change to root\"\n - su -\
+        \ root\n - echo \"set exports\"\n - sudo printf '\\n export TITODBSERVER=${resource.MySQL.networks[0].address}'\
+        \ >> /var/www/html/Tito/asset/Deployment/CloudAssembly/apache/envvars\n -\
+        \ sudo printf '\\n export TITODBUSERNAME=Tito' >> /var/www/html/Tito/asset/Deployment/CloudAssembly/apache/envvars\n\
+        \ - sudo printf '\\n export TITODBPASSWORD=VMware1!' >> /var/www/html/Tito/asset/Deployment/CloudAssembly/apache/envvars\n\
+        \ - sudo printf '\\n export MAPSKEY=${input.inmapsapikey}' >> /var/www/html/Tito/asset/Deployment/CloudAssembly/apache/envvars\n\
+        \ - sudo cp /var/www/html/Tito/asset/Deployment/CloudAssembly/apache/envvars\
+        \ /etc/apache2/envvars\n - echo ${resource.MySQL.id}\n - echo ${resource.MySQL.networks[0].address}\n\
+        \ - sudo systemctl restart apache2\n"
+      name: FE
+      networks:
+      - name: ${resource.Web_NSX_Network.name}
+        network: ${resource.Web_NSX_Network.id}
+      assignment: static
+  MySQL:
+    type: Cloud.Machine
+    metadata:
+      layoutPosition:
+      - 1
+      - 2
+    properties:
+      image: Ubuntu16c
+      flavor: 1vCPU-2GB
+      tags:
+      - key: tito
+        value: tito
+      - key: environment
+        value: dev
+      storage:
+        constraints:
+        - tag: vik.stor:raid1
+      cloudConfig: "#cloud-config\n# log all cloud-init process output (info & errors)\
+        \ to a logfile\noutput: {all: \">> /var/log/cloud-init-output.log\"}\nruncmd:\n\
+        \ - echo $(date) ' hello world!' >> /home/vmadmin/hello.txt\n - echo \"change\
+        \ to vmadmin\"\n - su - vmadmin\n - echo \"git tito\"\n - git clone https://github.com/jedisamui/Tito.git\n\
+        \ - sudo cp -r /home/vmadmin/Tito /.\n - sudo cp /Tito/asset/Deployment/CloudAssembly/titodb/mysqld.cnf\
+        \ /etc/mysql/mysql.conf.d/mysqld.cnf\n - echo \"change to root\"\n - su -\
+        \ root\n - echo \"copy mysql.cnf\"\n - sudo cp -r /etc/mysql/mysql.conf.d/mysqld.cnf\
+        \ /etc/mysql/mysql.cnf\n - echo \"change back to vmadmin\n - su - vmadmin\n\
+        \ - echo \"start mysql\"\n - sudo systemctl start mysql.service\n - cd /Tito/asset/Deployment/CloudAssembly/titodb/\n\
+        \ - sudo chmod 777 *\n - sudo chmod +x *\n - export MYSQL_ROOT_PASSWORD=Tito2016\n\
+        \ - echo \"create. mysql database\"\n - sudo mysql --user=root --password=$MYSQL_ROOT_PASSWORD\
+        \ < create-tito-db.sql\n"
+      networks:
+      - name: ${resource.Database_NSX_Network.name}
+        network: ${resource.Database_NSX_Network.id}
+      assignment: static
+      name: DB
+  Web_NSX_Network:
+    type: Cloud.NSX.Network
+    metadata:
+      layoutPosition:
+      - 2
+      - 0
+    properties:
+      name: WebNetwork
+      networkType: existing
+      constraints:
+      - tag: vik.net:web
+  Database_NSX_Network:
+    type: Cloud.NSX.Network
+    metadata:
+      layoutPosition:
+      - 3
+      - 0
+    properties:
+      name: DatabaseNetwork
+      networkType: existing
+      constraints:
+      - tag: vik.net:data
