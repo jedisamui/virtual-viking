@@ -1,5 +1,5 @@
 name: Basic Linux
-version: 0.0.38
+version: 0.0.39
 inputs: {}
 resources:
   webserver:
@@ -12,6 +12,7 @@ resources:
       name: webserver
       image: Ubuntu16c
       flavor: 1vCPU-2GB
+      count: 2
       storage:
         constraints:
         - tag: vik.stor:raid1
@@ -29,4 +30,4 @@ resources:
     properties:
       networkType: existing
       constraints:
-      - tag: vik.net:web
+      - tag: vik.net:data
